@@ -28,6 +28,9 @@ $isDeveloper = true;
         margin-left: -200px;
         margin-top: -250px;        
     }
+    h1 {
+        color: #fff44f;
+    }
 
     ul {
         list-style: none;
