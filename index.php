@@ -20,8 +20,8 @@ $isDeveloper = true;
 
 <h2><?php echo "Curso Laravel"; ?></h2>
 <ul>
-    <li><a href="./laravel/testapp/">test app - blank</a></li>
-    <li><a href="./laravel//">first app - curso</a></li>
+    <li><a href="./laravel/testapp/public/index.php">test app - blank</a></li>
+    <li><a href="./laravel/proyecto02/public/index.php">first app - curso laravel</a></li>
     <li></li>
 </ul>
 
