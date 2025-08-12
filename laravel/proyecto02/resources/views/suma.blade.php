@@ -18,5 +18,6 @@
     @if (isset($suma))
         <p>El resultado de la suma es: {{ $suma }}</p>
     @endif
+    
 </body>
 </html>
