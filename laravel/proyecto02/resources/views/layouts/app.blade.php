@@ -9,7 +9,7 @@
 <body>
     <a href="/">Inicio</a>|
     <a href="/suma">Suma </a>|
-    <a href="#">Opción 3</a>|
+    <a href="/productos">Productos</a>|
     <br>
     @yield('content')
 
