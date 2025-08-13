@@ -35,7 +35,11 @@ $isDeveloper = true;
 
 <h2><?php echo "Proyectos"; ?></h2>
 
-<a href="./proyectos/index.php">Indice de Proyectos</a>
+<ul>
+    <li>
+        <a href="./proyectos/index.php">Indice de Proyectos</a>
+    </li>
+</ul>
 
 <style>
 
