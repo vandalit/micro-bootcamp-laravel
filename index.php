@@ -33,6 +33,10 @@ $isDeveloper = true;
     <li></li>
 </ul>
 
+<h2><?php echo "Proyectos"; ?></h2>
+
+<a href="./proyectos/index.php">Indice de Proyectos</a>
+
 <style>
 
     :root {
@@ -60,5 +64,8 @@ $isDeveloper = true;
         line-height: 1.2em;
         font-family: popins, sans-serif;
         font-size: medium;
+    }
+    .deploy a {
+        color: #fff44f;
     }
 </style>
