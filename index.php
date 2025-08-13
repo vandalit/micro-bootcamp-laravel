@@ -25,6 +25,14 @@ $isDeveloper = true;
     <li></li>
 </ul>
 
+<h2><?php echo "Curso Angular"; ?></h2>
+
+<ul>
+    <li><a href="#">#</a></li>
+    <li><a href="#">#</a></li>
+    <li></li>
+</ul>
+
 <style>
 
     :root {
