@@ -11,6 +11,11 @@ import { Games } from "../games/games";
 export class User {
   username = 'Bootcamper';
   isLoggedIn = false;
+  favGame ='';
+
+  getFavorite(gameTitle: string) {
+    this.favGame = gameTitle;
+  }
 
   greet() {
     alert(`Hola ${this.username}`);

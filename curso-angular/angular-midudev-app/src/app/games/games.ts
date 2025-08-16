@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Output, Input } from '@angular/core';
 
 @Component({
   selector: 'app-games',
@@ -8,7 +8,8 @@ import { Component, Input } from '@angular/core';
   <h3>Games List for {{ username }}</h3>
     <ul>
       @for (game of games; track game.id){
-        <li>
+        <li 
+        (click)="fav(game.title)">
           <h2>{{ game.title }}</h2>
           <p>{{ game.description }}</p>
           <p><strong>Release Date:</strong> {{ game.releaseDate }}</p>
@@ -20,6 +21,12 @@ import { Component, Input } from '@angular/core';
 })
 export class Games {
   @Input() username = '';
+  @Output() addFavoriteEvent = new EventEmitter<string>();
+
+  fav(gameTitle: string) {
+    this.addFavoriteEvent.emit(gameTitle);
+    console.log(`Favorite game added: ${gameTitle}`);
+  }
 
   games = [
     {
