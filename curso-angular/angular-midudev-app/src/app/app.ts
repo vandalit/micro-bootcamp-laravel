@@ -6,7 +6,7 @@ import { User } from './user/user';
   selector: 'app-root',
   standalone: true,
   imports: [RouterOutlet, User],
-  template: '<app-user></app-user>',
+  templateUrl: './app.html',
   styleUrl: './app.css'
 })
 export class App {
