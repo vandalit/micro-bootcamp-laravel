@@ -5,5 +5,13 @@
 
 <app-user />
 
+@defer (on viewport) {
+    <app-comments />
+} @placeholder (minimum 1s) {
+    <p>Cargando comentarios...</p>
+} @loading (minimum 3s){
+    <p>Comentarios cargando...</p>
+}
+
 
 <footer>Mi pie</footer>

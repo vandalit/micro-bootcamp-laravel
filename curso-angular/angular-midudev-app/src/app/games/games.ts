@@ -47,11 +47,5 @@ export class Games {
       description: 'A life simulation game where players create and manage their own island paradise.',
       releaseDate: 'March 20, 2020',
     },
-    {
-      id: 4,
-      title: 'Splatoon 2',
-      description: 'A colorful third-person shooter where players control squid-like characters in turf wars.',
-      releaseDate: 'July 21, 2017',
-    },
   ]
 }
