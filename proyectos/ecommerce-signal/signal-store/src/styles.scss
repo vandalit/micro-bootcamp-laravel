@@ -2,11 +2,12 @@
 @import "tailwindcss";
 
 
+/* Opcional: tu CSS global adicional */
 :root {
-    color-scheme: light dark;
+  font-family: system-ui, sans-serif;
 }
 
-
+/* Puedes sobreescribir estilos si quieres */
 body {
-    @apply bg-gray-50;
+  @apply bg-white text-black dark:bg-gray-900 dark:text-white;
 }
