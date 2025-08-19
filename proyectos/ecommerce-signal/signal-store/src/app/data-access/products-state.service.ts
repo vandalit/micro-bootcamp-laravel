@@ -2,6 +2,7 @@ import { Injectable, inject } from "@angular/core";
 import { Product } from "../shared/interfaces/product.interface";
 import { ProductsService } from "./products.service";
 import { signalSlice } from 'ngxtension/signal-slice';
+import { map } from "rxjs/operators";
 interface State {
     products: Product[];
     status: 'loading' | 'success' | 'error';
@@ -16,7 +17,12 @@ export class ProductsStateService {
 
     state = signalSlice({
         initialState: this.initialState,
-        sources: [],
+        sources: [
+            this.productsService
+            .getProducts()
+            .pipe(map(products => ({ products, status: 'success' as const }))),
+
+        ],
     });
 }
 
