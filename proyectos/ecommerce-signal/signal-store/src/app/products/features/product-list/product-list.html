@@ -1,10 +1,14 @@
-<h1>product-list !</h1>
 
-@for(product of productState.state().products; track product.id) {
-  <div class="product-item">
-    <h2>{{ product.title }}</h2>
-    <p>{{ product.description }}</p>
+{{ productState.state.status() }}
 
+<div class="mx-auto max-w-screen-xl">
+
+  <div class="grid grid-cols-[repeat(4,300px)] gap-4 justify-center">
+    @for(product of productState.state().products; track product) {
+      <app-product-card class="block" [product]="product" />
+    }
+    <div></div>
   </div>
-}
+  
+</div>
 
