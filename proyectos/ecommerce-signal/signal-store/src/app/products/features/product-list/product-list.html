@@ -3,12 +3,10 @@
 
 <div class="mx-auto max-w-screen-xl">
 
-  <div class="grid grid-cols-[repeat(4,300px)] gap-4 justify-center">
+  <div class="grid grid-cols-[repeat(4,300px)] gap-4">
     @for(product of productState.state().products; track product) {
       <app-product-card class="block" [product]="product" />
     }
-    <div></div>
   </div>
-  
 </div>
 
