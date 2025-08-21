@@ -1,5 +1,7 @@
-/* You can add global styles to this file, and also import other style files */
-@import "tailwindcss";
+/* This file is part of the Tailwind CSS project. */
+
+@use "tailwindcss" as *;
+
 
 
 /* Opcional: tu CSS global adicional */
@@ -9,5 +11,9 @@
 
 /* Puedes sobreescribir estilos si quieres */
 body {
-  @apply bg-white text-black dark:bg-gray-900 dark:text-white;
+  @apply bg-white text-black;
+}
+
+.dark body {
+  @apply bg-gray-900 text-white;
 }
