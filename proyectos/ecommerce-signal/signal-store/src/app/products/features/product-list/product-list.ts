@@ -10,4 +10,9 @@ import { ProductCard } from '../../ui/product-card/product-card';
 export default class ProductList {
   productState = inject(ProductsStateService);
 
+  changePage() {
+    const page = this.productState.state.page() + 1;
+    this.productState.changePage$.next(page);
+  }
+
 }
