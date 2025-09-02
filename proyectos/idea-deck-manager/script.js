@@ -9,11 +9,25 @@ class IdeaDeckManager {
         this.init();
     }
 
-    init() {
-        this.loadData();
+    async init() {
+        this.detectEnvironment();
+        await this.loadData();
         this.bindEvents();
         this.render();
         this.updateFilters();
+    }
+
+    // Detect if running locally or on GitHub Pages
+    detectEnvironment() {
+        this.isLocal = window.location.protocol === 'file:' || 
+                      window.location.hostname === 'localhost' || 
+                      window.location.hostname === '127.0.0.1';
+        
+        // Show/hide local-only features
+        const localBtn = document.getElementById('localBtn');
+        if (localBtn) {
+            localBtn.style.display = this.isLocal ? 'flex' : 'none';
+        }
     }
 
     // Event Binding
@@ -26,6 +40,12 @@ class IdeaDeckManager {
         document.getElementById('exportBtn').addEventListener('click', () => this.exportToCSV());
         document.getElementById('importBtn').addEventListener('click', () => this.importFromCSV());
         document.getElementById('clearDataBtn').addEventListener('click', () => this.clearData());
+        
+        // Local-only feature
+        const localBtn = document.getElementById('localBtn');
+        if (localBtn) {
+            localBtn.addEventListener('click', () => this.generateLocalJSON());
+        }
         
         // Modal events
         document.getElementById('closeDeckModal').addEventListener('click', () => this.hideDeckModal());
@@ -67,21 +87,40 @@ class IdeaDeckManager {
     }
 
     // Data Management
-    loadData() {
-        const savedData = localStorage.getItem('ideaDeckManager');
+    async loadData() {
+        // Try to load from localStorage first
+        const savedData = localStorage.getItem('cardsBacklog');
         if (savedData) {
             try {
                 const data = JSON.parse(savedData);
                 this.decks = data.decks || [];
                 this.updateCategoriesAndHashtags();
+                return;
             } catch (error) {
-                console.error('Error loading data:', error);
-                this.decks = [];
+                console.error('Error loading localStorage data:', error);
             }
-        } else {
-            // Create default deck if no data exists
-            this.createDefaultDeck();
         }
+        
+        // If no localStorage data and running locally, try to load from data.json
+        if (this.isLocal) {
+            try {
+                const response = await fetch('./data.json');
+                if (response.ok) {
+                    const data = await response.json();
+                    this.decks = data.decks || [];
+                    this.updateCategoriesAndHashtags();
+                    // Save to localStorage for future use
+                    this.saveData();
+                    return;
+                }
+            } catch (error) {
+                console.log('No data.json found or error loading it:', error);
+            }
+        }
+        
+        // Default empty state
+        this.decks = [];
+        this.createDefaultDeck();
     }
 
     saveData() {
@@ -89,7 +128,7 @@ class IdeaDeckManager {
             decks: this.decks,
             lastModified: new Date().toISOString()
         };
-        localStorage.setItem('ideaDeckManager', JSON.stringify(data));
+        localStorage.setItem('cardsBacklog', JSON.stringify(data));
     }
 
     createDefaultDeck() {
@@ -943,11 +982,39 @@ class IdeaDeckManager {
             this.decks = [];
             this.allCategories.clear();
             this.allHashtags.clear();
-            localStorage.removeItem('ideaDeckManager');
+            localStorage.removeItem('cardsBacklog');
             this.createDefaultDeck();
             this.render();
             this.updateFilters();
         }
+    }
+
+    // Generate static JSON file for local development
+    generateLocalJSON() {
+        if (!this.isLocal) {
+            alert('Esta función solo está disponible en entorno local.');
+            return;
+        }
+
+        const data = {
+            decks: this.decks,
+            lastModified: new Date().toISOString(),
+            version: "1.0.0"
+        };
+
+        const jsonString = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'data.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        alert('Archivo data.json generado. Colócalo en la raíz del proyecto para datos iniciales.');
     }
 }
 

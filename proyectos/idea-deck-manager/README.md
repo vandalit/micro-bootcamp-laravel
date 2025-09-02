@@ -1,4 +1,4 @@
-# Idea Deck Manager
+# Cards Backlog
 
 Un sistema de gestión de ideas y proyectos con diseño Bento que permite organizar cards en decks de manera visual e intuitiva.
 
@@ -34,6 +34,8 @@ Un sistema de gestión de ideas y proyectos con diseño Bento que permite organi
 - **Layout Bento**: Diseño moderno tipo grid
 - **Iconos**: Representación visual con Font Awesome
 - **Responsive**: Adaptable a diferentes tamaños de pantalla
+- **Vista detalle**: Modal con formato card y efectos parallax
+- **Mouse parallax**: Efectos 3D inspirados en Ana Cards
 
 ## 🛠️ Tecnologías
 
@@ -76,6 +78,13 @@ idea-deck-manager/
 - Arrastra cards entre decks para moverlas
 - Indicadores visuales durante el arrastre
 - Confirmación automática de movimientos
+
+### Vista Detalle con Parallax
+- **Modal card-shaped**: Mantiene proporciones de card (16:10)
+- **Mouse parallax 3D**: Movimiento siguiendo el cursor
+- **Elementos flotantes**: Categoría y título con efectos independientes
+- **Fondo dinámico**: Parallax background con movimiento opuesto
+- **Animaciones suaves**: Transiciones cubic-bezier para retorno
 
 ### Sistema de Filtros
 - **Categorías**: Se generan automáticamente de las cards
@@ -124,4 +133,4 @@ Este es un proyecto personal, pero las sugerencias y mejoras son bienvenidas.
 
 ---
 
-**Desarrollado con ❤️ para la gestión eficiente de ideas y proyectos**
+**Desarrollado con ❤️ para la gestión eficiente de cards y backlogs**
