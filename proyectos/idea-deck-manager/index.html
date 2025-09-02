@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Idea Deck Manager</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-layer-group"></i> Idea Deck Manager</h1>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="createDeckBtn">
+                        <i class="fas fa-plus"></i> Crear Deck
+                    </button>
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" id="dataMenuBtn">
+                            <i class="fas fa-database"></i> Datos
+                        </button>
+                        <div class="dropdown-menu" id="dataMenu">
+                            <button class="dropdown-item" id="exportBtn">
+                                <i class="fas fa-download"></i> Exportar CSV
+                            </button>
+                            <button class="dropdown-item" id="importBtn">
+                                <i class="fas fa-upload"></i> Importar CSV
+                            </button>
+                            <button class="dropdown-item danger" id="clearDataBtn">
+                                <i class="fas fa-trash"></i> Limpiar Datos
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Filters -->
+        <div class="filters-section">
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Buscar por título, descripción o hashtags...">
+            </div>
+            <div class="filter-tags">
+                <div class="tag-group">
+                    <label>Categorías:</label>
+                    <div id="categoryFilters" class="tag-container"></div>
+                </div>
+                <div class="tag-group">
+                    <label>Hashtags:</label>
+                    <div id="hashtagFilters" class="tag-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="decks-container" id="decksContainer">
+                <!-- Decks will be dynamically generated here -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <!-- Create/Edit Deck Modal -->
+    <div class="modal" id="deckModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="deckModalTitle">Crear Nuevo Deck</h3>
+                <button class="close-btn" id="closeDeckModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="deckForm">
+                <div class="form-group">
+                    <label for="deckName">Nombre del Deck:</label>
+                    <input type="text" id="deckName" required>
+                </div>
+                <div class="form-group">
+                    <label for="deckDescription">Descripción:</label>
+                    <textarea id="deckDescription" rows="3"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelDeckBtn">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create/Edit Card Modal -->
+    <div class="modal" id="cardModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="cardModalTitle">Crear Nueva Card</h3>
+                <button class="close-btn" id="closeCardModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="cardForm">
+                <div class="form-group">
+                    <label for="cardTitle">Título:</label>
+                    <input type="text" id="cardTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="cardCategory">Categoría:</label>
+                    <input type="text" id="cardCategory" placeholder="ej: desarrollo, diseño, marketing">
+                </div>
+                <div class="form-group">
+                    <label for="cardDescription">Descripción:</label>
+                    <textarea id="cardDescription" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="cardNotes">Notas:</label>
+                    <textarea id="cardNotes" rows="4"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="cardHashtags">Hashtags:</label>
+                    <input type="text" id="cardHashtags" placeholder="#idea #proyecto #importante">
+                </div>
+                <div class="form-group">
+                    <label for="cardImages">URLs de Imágenes (separadas por comas):</label>
+                    <textarea id="cardImages" rows="2" placeholder="https://ejemplo.com/imagen1.jpg, https://ejemplo.com/imagen2.jpg"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelCardBtn">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Card Detail View Modal -->
+    <div class="modal detail-modal" id="cardDetailModal">
+        <div class="detail-card-container">
+            <div class="detail-card">
+                <!-- Parallax Background Layer -->
+                <div class="detail-parallax-bg" id="detailParallaxBg"></div>
+                
+                <!-- Card Header -->
+                <div class="detail-card-header">
+                    <div class="detail-category-badge" id="detailCategory"></div>
+                    <button class="detail-close-btn" id="closeDetailModal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <!-- Card Content -->
+                <div class="detail-card-content">
+                    <!-- Title Section -->
+                    <div class="detail-title-section">
+                        <h1 class="detail-title" id="detailTitle"></h1>
+                        <div class="detail-meta">
+                            <span class="detail-date" id="detailDate"></span>
+                            <div class="detail-actions">
+                                <button class="detail-action-btn" id="editDetailBtn" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="detail-action-btn" id="deleteDetailBtn" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Scrollable Content Area -->
+                    <div class="detail-scroll-area">
+                        <!-- Description -->
+                        <div class="detail-field" id="detailDescriptionField">
+                            <div class="detail-field-label">
+                                <i class="fas fa-align-left"></i>
+                                <span>Descripción</span>
+                            </div>
+                            <div class="detail-field-content" id="detailDescription"></div>
+                        </div>
+                        
+                        <!-- Notes -->
+                        <div class="detail-field" id="detailNotesField">
+                            <div class="detail-field-label">
+                                <i class="fas fa-sticky-note"></i>
+                                <span>Notas</span>
+                            </div>
+                            <div class="detail-field-content" id="detailNotes"></div>
+                        </div>
+                        
+                        <!-- Hashtags -->
+                        <div class="detail-field" id="detailHashtagsField">
+                            <div class="detail-field-label">
+                                <i class="fas fa-hashtag"></i>
+                                <span>Hashtags</span>
+                            </div>
+                            <div class="detail-hashtags" id="detailHashtags"></div>
+                        </div>
+                        
+                        <!-- Images -->
+                        <div class="detail-field" id="detailImagesField">
+                            <div class="detail-field-label">
+                                <i class="fas fa-images"></i>
+                                <span>Imágenes</span>
+                            </div>
+                            <div class="detail-images-grid" id="detailImages"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Input for Import -->
+    <input type="file" id="fileInput" accept=".csv" style="display: none;">
+
+    <script src="script.js"></script>
+</body>
+</html>
