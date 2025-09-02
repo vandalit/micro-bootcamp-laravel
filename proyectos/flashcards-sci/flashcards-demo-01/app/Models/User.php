@@ -21,6 +21,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'google_id',
+        'avatar',
     ];
 
     /**
@@ -31,6 +33,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'google_id',
     ];
 
     /**
@@ -44,5 +47,27 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Get flashcards created by this user
+     */
+    public function flashcards()
+    {
+        return $this->hasMany(Flashcard::class, 'created_by', 'email');
+    }
+
+    /**
+     * Check if user's email matches the active domain restriction
+     */
+    public function isAllowedByDomain()
+    {
+        $activeDomain = DomainSetting::getActiveDomain();
+        
+        if (!$activeDomain) {
+            return true; // No domain restriction active
+        }
+        
+        return str_ends_with($this->email, $activeDomain->domain);
     }
 }

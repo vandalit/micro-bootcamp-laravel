@@ -1,4 +1,5 @@
-<div class="max-w-sm bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+<a [routerLink]="['/product', product().id]">
+    <div class="max-w-sm bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
     <a href="#">
         <img class="rounded-t-lg h-60 w-full object-contain object-center" [src]="product().image" alt="" />
     </a>
@@ -21,3 +22,4 @@
         </a>
     </div>
 </div>
+</a>

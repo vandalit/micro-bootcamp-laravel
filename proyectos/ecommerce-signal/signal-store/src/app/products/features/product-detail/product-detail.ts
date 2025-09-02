@@ -1,20 +1,26 @@
-import { Component, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, effect, input } from '@angular/core';
+import { inject } from '@angular/core';
+import { ProductDetailStateService } from '../../../data-access/product-detail-state.service';
+import { CurrencyPipe } from '@angular/common';
+
 
 @Component({
   selector: 'app-product-detail',
-  imports: [],
+  imports: [CurrencyPipe],
   templateUrl: './product-detail.html',
-  styles: ``
+  styles: ``,
+  providers: [ProductDetailStateService],
 })
 export default class ProductDetail {
-  private activatedRoute = inject(ActivatedRoute);
+
+  productDetailState = inject(ProductDetailStateService).state;
+
+  id = input.required<string>();
 
   constructor() {
-    this.activatedRoute.params.subscribe(params => {
-      //const productId = params['id'];
-      // Logic to fetch and display product details using productId
-      console.log(params);
+    effect(() => {
+      this.productDetailState.getById(this.id());
     });
+
   }
 }
