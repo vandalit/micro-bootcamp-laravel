@@ -1,87 +1,76 @@
 {
   "decks": [
     {
-      "id": "launch-deck-001",
-      "name": "🚀 Deck-Backlog Launch",
-      "description": "Ideas y funcionalidades para el lanzamiento de Deck-Backlog",
+      "id": "demo-deck-001",
+      "name": "Demo Deck",
+      "description": "Deck de demostración con ejemplos de cards",
+      "layout": "column",
+      "order": 1,
       "cards": [
         {
-          "id": "launch-card-001",
-          "title": "Sistema de Persistencia Vault",
-          "category": "desarrollo",
-          "description": "Implementar sistema híbrido vault.json + localStorage para persistencia de datos",
-          "notes": "✅ Completado: Sistema que carga vault.json como base y localStorage como capa de modificaciones. Incluye backup automático y tracking de origen de datos.",
+          "id": "demo-card-001",
+          "title": "Card de Ejemplo con Imagen",
+          "category": "demo",
+          "description": "Esta es una card de demostración que muestra cómo se ve con imagen de portada",
+          "notes": "Ejemplo de notas detalladas para mostrar el funcionamiento completo del sistema.",
           "hashtags": [
-            "#persistencia",
-            "#vault",
-            "#localStorage",
-            "#backup"
+            "demo",
+            "ejemplo",
+            "imagen"
           ],
-          "images": [],
+          "coverImage": "https://picsum.photos/400/300?random=1",
+          "galleryImages": [
+            "https://picsum.photos/200/150?random=2",
+            "https://picsum.photos/200/150?random=3"
+          ],
           "createdAt": "2025-09-03T17:28:00.000Z"
         },
         {
-          "id": "launch-card-002",
-          "title": "Indicadores Visuales de Estado",
-          "category": "diseño",
-          "description": "Agregar iconos que muestren el origen de los datos (vault vs localStorage)",
-          "notes": "🔄 En progreso: Iconos de mundo para datos modificados (localStorage) y bóveda para datos originales (vault). Ayuda a usuarios identificar qué necesita backup.",
+          "id": "demo-card-002",
+          "title": "Card con Galería",
+          "category": "demo",
+          "description": "Ejemplo de card con múltiples imágenes en galería",
+          "notes": "Esta card demuestra cómo se muestran las imágenes de galería junto con la imagen de portada.",
           "hashtags": [
-            "#ui",
-            "#iconos",
-            "#estado",
-            "#visual"
+            "galería",
+            "imágenes",
+            "visual"
           ],
-          "images": [],
+          "coverImage": "https://picsum.photos/400/300?random=4",
+          "galleryImages": [
+            "https://picsum.photos/200/150?random=5",
+            "https://picsum.photos/200/150?random=6",
+            "https://picsum.photos/200/150?random=7",
+            "https://picsum.photos/200/150?random=8"
+          ],
           "createdAt": "2025-09-03T17:29:00.000Z"
         },
         {
-          "id": "launch-card-003",
-          "title": "Botón de Backup Inteligente",
-          "category": "funcionalidad",
-          "description": "Crear función de backup que genere vault.json actualizado con instrucciones",
-          "notes": "🔄 En progreso: Botón en dropdown que descarga vault.json con todos los cambios actuales e instrucciones para reemplazar en proyecto local.",
+          "id": "demo-card-003",
+          "title": "Card Simple",
+          "category": "demo",
+          "description": "Ejemplo de card básica sin imágenes",
+          "notes": "Esta card muestra cómo se ve el diseño cuando no hay imágenes configuradas.",
           "hashtags": [
-            "#backup",
-            "#export",
-            "#vault",
-            "#instrucciones"
+            "simple",
+            "básico",
+            "texto"
           ],
-          "images": [],
+          "coverImage": "",
+          "galleryImages": [],
           "createdAt": "2025-09-03T17:30:00.000Z"
-        },
-        {
-          "id": "launch-card-004",
-          "title": "Demo Deck Atractivo",
-          "category": "contenido",
-          "description": "Crear deck de demostración que muestre las capacidades del sistema",
-          "notes": "✅ Este mismo deck! Muestra diferentes estados, categorías, hashtags y el flujo completo de la aplicación para nuevos usuarios.",
-          "hashtags": [
-            "#demo",
-            "#showcase",
-            "#onboarding",
-            "#ejemplo"
-          ],
-          "images": [],
-          "createdAt": "2025-09-03T17:31:00.000Z"
-        },
-        {
-          "id": "launch-card-005",
-          "title": "Documentación GitHub",
-          "category": "documentacion",
-          "description": "Actualizar README con instrucciones del nuevo sistema vault",
-          "notes": "📝 Pendiente: Explicar el flujo vault.json → localStorage → backup, instrucciones de instalación local, y guía de uso.",
-          "hashtags": [
-            "#docs",
-            "#readme",
-            "#github",
-            "#instrucciones"
-          ],
-          "images": [],
-          "createdAt": "2025-09-03T17:32:00.000Z"
         }
       ],
       "createdAt": "2025-09-03T17:28:00.000Z"
+    },
+    {
+      "id": "ideas-generales-default",
+      "name": "Ideas Generales",
+      "description": "Deck principal para ideas y proyectos",
+      "layout": "landscape",
+      "order": 0,
+      "cards": [],
+      "createdAt": "2025-09-03T17:27:00.000Z"
     }
   ],
   "lastModified": "2025-09-03T17:32:00.000Z",

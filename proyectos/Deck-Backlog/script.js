@@ -3,10 +3,12 @@ class IdeaDeckManager {
         this.decks = [];
         this.currentEditingDeck = null;
         this.currentEditingCard = null;
+        this.currentDetailCard = null;
         this.allCategories = new Set();
         this.allHashtags = new Set();
         this.storageMode = 'web'; // 'web' (localStorage) or 'local' (JSON)
         this.isGitHubPages = false;
+        this.vaultData = null; // Store original vault data for comparison
         
         this.init();
     }
@@ -102,43 +104,19 @@ class IdeaDeckManager {
         document.getElementById('closeBackupModal').addEventListener('click', () => this.hideBackupModal());
         document.getElementById('confirmBackupBtn').addEventListener('click', () => this.hideBackupModal());
         
-        // Debug all clicks to see what's happening
+        // Detail modal button events - using class selector like deck buttons
         document.addEventListener('click', (e) => {
-            console.log('Click detected on:', e.target, 'ID:', e.target.id, 'Classes:', e.target.className);
-            
-            if (e.target.id === 'editDetailBtn') {
-                console.log('DIRECT HIT: editDetailBtn clicked');
+            // Check for detail action buttons by class
+            if (e.target.classList.contains('detail-action-btn') || e.target.closest('.detail-action-btn')) {
+                const button = e.target.classList.contains('detail-action-btn') ? e.target : e.target.closest('.detail-action-btn');
                 e.preventDefault();
                 e.stopPropagation();
-                this.editFromDetail();
-                return;
-            }
-            
-            // Check if clicked element is inside editDetailBtn
-            const editBtn = e.target.closest('#editDetailBtn');
-            if (editBtn) {
-                console.log('CLOSEST HIT: inside editDetailBtn');
-                e.preventDefault();
-                e.stopPropagation();
-                this.editFromDetail();
-                return;
-            }
-            
-            if (e.target.id === 'deleteDetailBtn') {
-                console.log('DIRECT HIT: deleteDetailBtn clicked');
-                e.preventDefault();
-                e.stopPropagation();
-                this.deleteFromDetail();
-                return;
-            }
-            
-            const deleteBtn = e.target.closest('#deleteDetailBtn');
-            if (deleteBtn) {
-                console.log('CLOSEST HIT: inside deleteDetailBtn');
-                e.preventDefault();
-                e.stopPropagation();
-                this.deleteFromDetail();
-                return;
+                
+                if (button.id === 'editDetailBtn') {
+                    this.editFromDetail();
+                } else if (button.id === 'deleteDetailBtn') {
+                    this.deleteFromDetail();
+                }
             }
         });
         
@@ -170,6 +148,7 @@ class IdeaDeckManager {
             const response = await fetch('./vault.json');
             if (response.ok) {
                 vaultData = await response.json();
+                this.vaultData = JSON.parse(JSON.stringify(vaultData)); // Deep copy for comparison
                 console.log('Vault data loaded:', vaultData);
                 // Mark all vault data with source
                 this.markDataSource(vaultData.decks, 'vault');
@@ -433,7 +412,8 @@ class IdeaDeckManager {
             document.getElementById('cardDescription').value = card.description || '';
             document.getElementById('cardNotes').value = card.notes || '';
             document.getElementById('cardHashtags').value = card.hashtags ? card.hashtags.map(tag => `#${tag}`).join(' ') : '';
-            document.getElementById('cardImages').value = card.images ? card.images.join(', ') : '';
+            document.getElementById('cardCoverImage').value = card.coverImage || '';
+            document.getElementById('cardGalleryImages').value = card.galleryImages ? card.galleryImages.join(', ') : '';
         } else {
             title.textContent = 'Crear Nueva Card';
             form.reset();
@@ -455,12 +435,13 @@ class IdeaDeckManager {
         const description = document.getElementById('cardDescription').value.trim();
         const notes = document.getElementById('cardNotes').value.trim();
         const hashtagString = document.getElementById('cardHashtags').value.trim();
-        const imageString = document.getElementById('cardImages').value.trim();
+        const coverImage = document.getElementById('cardCoverImage').value.trim();
+        const galleryImagesString = document.getElementById('cardGalleryImages').value.trim();
         
         if (!title) return;
         
         const hashtags = this.parseHashtags(hashtagString);
-        const images = this.parseImages(imageString);
+        const galleryImages = this.parseImages(galleryImagesString);
         
         const deck = this.decks.find(d => d.id === this.currentEditingCard.deckId);
         if (!deck) return;
@@ -473,7 +454,8 @@ class IdeaDeckManager {
             card.description = description;
             card.notes = notes;
             card.hashtags = hashtags;
-            card.images = images;
+            card.coverImage = coverImage;
+            card.galleryImages = galleryImages;
             card.updatedAt = new Date().toISOString();
         } else {
             // Create new card
@@ -484,7 +466,8 @@ class IdeaDeckManager {
                 description,
                 notes,
                 hashtags,
-                images,
+                coverImage,
+                galleryImages,
                 createdAt: new Date().toISOString()
             };
             deck.cards.push(newCard);
@@ -706,13 +689,40 @@ class IdeaDeckManager {
             hashtagsField.style.display = 'block';
         }
         
-        // Images
+        // Images - Cover and Gallery
         const imagesElement = document.getElementById('detailImages');
         const imagesField = document.getElementById('detailImagesField');
-        if (card.images && card.images.length > 0) {
-            imagesElement.innerHTML = card.images
-                .map(img => `<img src="${img}" alt="Card image" class="detail-image" onerror="this.style.display='none'">`)
-                .join('');
+        
+        let imagesHTML = '';
+        
+        // Cover image
+        if (card.coverImage) {
+            imagesHTML += `
+                <div class="detail-image-section">
+                    <label class="detail-image-label">Imagen de Portada:</label>
+                    <div class="detail-cover-image">
+                        <img src="${card.coverImage}" alt="Cover image" onerror="this.style.display='none'">
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Gallery images
+        if (card.galleryImages && card.galleryImages.length > 0) {
+            imagesHTML += `
+                <div class="detail-image-section">
+                    <label class="detail-image-label">Galería (${card.galleryImages.length}):</label>
+                    <div class="detail-gallery-images">
+                        ${card.galleryImages.map(img => 
+                            `<img src="${img}" alt="Gallery image" class="detail-gallery-thumb" onerror="this.style.display='none'">`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        if (imagesHTML) {
+            imagesElement.innerHTML = imagesHTML;
             imagesField.style.display = 'block';
         } else {
             imagesField.style.display = 'none';
@@ -734,12 +744,14 @@ class IdeaDeckManager {
                 console.log('Found card:', card);
                 
                 if (card) {
-                    this.showCardModal(this.currentDetailCard.deckId, card);
+                    setTimeout(() => {
+                        this.showCardModal(this.currentDetailCard.deckId, card);
+                    }, 100);
                 } else {
                     console.error('Card not found in deck. Available cards:', deck.cards.map(c => c.id));
                 }
             } else {
-                console.error('Deck not found or has no cards. Looking for deckId:', this.currentDetailCard.deckId);
+                console.error('Deck not found or has no cards');
             }
         } else {
             console.error('No currentDetailCard found for editing');
@@ -1043,9 +1055,36 @@ class IdeaDeckManager {
         const hashtagsHTML = card.hashtags && card.hashtags.length > 0 
             ? `<div class="card-hashtags">${card.hashtags.map(tag => `<span class="hashtag">#${tag}</span>`).join('')}</div>`
             : '';
-        const imagesHTML = card.images && card.images.length > 0
-            ? `<div class="card-images">${card.images.slice(0, 3).map(img => `<img src="${img}" alt="Card image" class="card-image" onerror="this.style.display='none'">`).join('')}</div>`
-            : '';
+        // Build images HTML with cover and gallery
+        let imagesHTML = '';
+        if (card.coverImage || (card.galleryImages && card.galleryImages.length > 0)) {
+            imagesHTML = '<div class="card-images-container">';
+            
+            // Cover image
+            if (card.coverImage) {
+                imagesHTML += `<div class="card-cover-image">
+                    <img src="${card.coverImage}" alt="Cover image" onerror="this.style.display='none'">
+                </div>`;
+            }
+            
+            // Gallery images
+            if (card.galleryImages && card.galleryImages.length > 0) {
+                const visibleImages = card.galleryImages.slice(0, 3);
+                const remainingCount = card.galleryImages.length - 3;
+                
+                imagesHTML += '<div class="card-gallery-images">';
+                visibleImages.forEach(img => {
+                    imagesHTML += `<img src="${img}" alt="Gallery image" class="gallery-thumb" onerror="this.style.display='none'">`;
+                });
+                
+                if (remainingCount > 0) {
+                    imagesHTML += `<div class="gallery-more">+${remainingCount}</div>`;
+                }
+                imagesHTML += '</div>';
+            }
+            
+            imagesHTML += '</div>';
+        }
         
         return `
             <div class="card" draggable="true" data-card-id="${card.id}" data-deck-id="${deckId}" onclick="app.showDetailModal('${deckId}', app.decks.find(d => d.id === '${deckId}').cards.find(c => c.id === '${card.id}'))">
