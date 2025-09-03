@@ -48,7 +48,6 @@ class IdeaDeckManager {
     
     updateStorageUI() {
         const storageChip = document.getElementById('storageChip');
-        const storageToggle = document.getElementById('storageToggle');
         
         if (storageChip) {
             if (this.isGitHubPages) {
@@ -57,14 +56,6 @@ class IdeaDeckManager {
             } else if (this.isLocal) {
                 storageChip.textContent = 'Local';
                 storageChip.className = 'storage-chip local';
-            }
-        }
-        
-        if (storageToggle) {
-            storageToggle.checked = this.storageMode === 'local';
-            // Don't disable the toggle - let the event handler show the warning
-            if (this.isGitHubPages) {
-                console.log('GitHub Pages detected - toggle will show warning when clicked');
             }
         }
     }
@@ -78,14 +69,9 @@ class IdeaDeckManager {
         // Data menu actions
         document.getElementById('exportBtn').addEventListener('click', () => this.exportToCSV());
         document.getElementById('importBtn').addEventListener('click', () => this.importFromCSV());
+        document.getElementById('backupBtn').addEventListener('click', () => this.showBackupModal());
         document.getElementById('clearDataBtn').addEventListener('click', () => this.clearData());
         
-        // Storage toggle
-        const storageToggle = document.getElementById('storageToggle');
-        if (storageToggle) {
-            storageToggle.addEventListener('click', (e) => this.handleStorageToggle(e));
-            storageToggle.addEventListener('change', (e) => this.handleStorageToggle(e));
-        }
         
         // Local-only feature
         const localBtn = document.getElementById('localBtn');
@@ -112,19 +98,47 @@ class IdeaDeckManager {
         // Detail modal events
         document.getElementById('closeDetailModal').addEventListener('click', () => this.hideDetailModal());
         
-        // Detail modal events - use event delegation
+        // Backup modal events
+        document.getElementById('closeBackupModal').addEventListener('click', () => this.hideBackupModal());
+        document.getElementById('confirmBackupBtn').addEventListener('click', () => this.hideBackupModal());
+        
+        // Debug all clicks to see what's happening
         document.addEventListener('click', (e) => {
-            if (e.target.id === 'editDetailBtn' || e.target.closest('#editDetailBtn')) {
-                console.log('Edit detail button clicked via delegation');
+            console.log('Click detected on:', e.target, 'ID:', e.target.id, 'Classes:', e.target.className);
+            
+            if (e.target.id === 'editDetailBtn') {
+                console.log('DIRECT HIT: editDetailBtn clicked');
                 e.preventDefault();
                 e.stopPropagation();
                 this.editFromDetail();
+                return;
             }
-            if (e.target.id === 'deleteDetailBtn' || e.target.closest('#deleteDetailBtn')) {
-                console.log('Delete detail button clicked via delegation');
+            
+            // Check if clicked element is inside editDetailBtn
+            const editBtn = e.target.closest('#editDetailBtn');
+            if (editBtn) {
+                console.log('CLOSEST HIT: inside editDetailBtn');
+                e.preventDefault();
+                e.stopPropagation();
+                this.editFromDetail();
+                return;
+            }
+            
+            if (e.target.id === 'deleteDetailBtn') {
+                console.log('DIRECT HIT: deleteDetailBtn clicked');
                 e.preventDefault();
                 e.stopPropagation();
                 this.deleteFromDetail();
+                return;
+            }
+            
+            const deleteBtn = e.target.closest('#deleteDetailBtn');
+            if (deleteBtn) {
+                console.log('CLOSEST HIT: inside deleteDetailBtn');
+                e.preventDefault();
+                e.stopPropagation();
+                this.deleteFromDetail();
+                return;
             }
         });
         
@@ -148,109 +162,130 @@ class IdeaDeckManager {
 
     // Data Management
     async loadData() {
-        if (this.storageMode === 'web') {
-            // GitHub Pages or web mode - use localStorage only
+        console.log('Loading data: vault.json first, then localStorage merge...');
+        
+        // Step 1: Always load vault.json as base data
+        let vaultData = null;
+        try {
+            const response = await fetch('./vault.json');
+            if (response.ok) {
+                vaultData = await response.json();
+                console.log('Vault data loaded:', vaultData);
+                // Mark all vault data with source
+                this.markDataSource(vaultData.decks, 'vault');
+            }
+        } catch (error) {
+            console.log('No vault.json found or error loading it:', error);
+        }
+        
+        // Step 2: Load localStorage modifications
+        let localStorageData = null;
+        try {
             const savedData = localStorage.getItem('cardsBacklog');
             if (savedData) {
-                try {
-                    const data = JSON.parse(savedData);
-                    this.decks = data.decks || [];
-                    this.updateCategoriesAndHashtags();
-                    return;
-                } catch (error) {
-                    console.error('Error loading localStorage data:', error);
-                }
+                localStorageData = JSON.parse(savedData);
+                console.log('localStorage data loaded:', localStorageData);
+                // Mark all localStorage data with source
+                this.markDataSource(localStorageData.decks, 'localStorage');
             }
-        } else if (this.storageMode === 'local') {
-            // Local mode - use JSON only
-            try {
-                const response = await fetch('./data.json');
-                if (response.ok) {
-                    const data = await response.json();
-                    this.decks = data.decks || [];
-                    this.updateCategoriesAndHashtags();
-                    return;
-                }
-            } catch (error) {
-                console.log('No data.json found or error loading it:', error);
-            }
+        } catch (error) {
+            console.error('Error loading localStorage data:', error);
         }
-
-        // Default empty state
-        this.decks = [];
-        this.createDefaultDeck();
+        
+        // Step 3: Merge data (vault as base, localStorage as modifications/additions)
+        this.decks = this.mergeVaultAndLocalStorage(vaultData?.decks || [], localStorageData?.decks || []);
+        
+        // Step 4: If no data at all, create default
+        if (this.decks.length === 0) {
+            this.createDefaultDeck();
+        }
+        
+        this.updateCategoriesAndHashtags();
+        console.log('Final merged data:', this.decks);
     }
 
     saveData() {
-        if (this.storageMode === 'web') {
-            // Save to localStorage
-            const data = {
-                decks: this.decks,
-                lastModified: new Date().toISOString()
-            };
-            localStorage.setItem('cardsBacklog', JSON.stringify(data));
-        } else if (this.storageMode === 'local') {
-            // In local mode, data is automatically saved when modified
-            // The user manually replaces data.json when needed
-            console.log('Local mode: Changes saved in memory. Replace data.json manually when needed.');
-        }
+        // Always save to localStorage (single storage system)
+        const data = {
+            decks: this.decks,
+            lastModified: new Date().toISOString()
+        };
+        localStorage.setItem('cardsBacklog', JSON.stringify(data));
+        console.log('Data saved to localStorage');
     }
     
-    // Manual export to JSON (for local mode backup)
-    saveToJSON() {
+    // Mark data with source origin for visual indicators
+    markDataSource(decks, source) {
+        if (!decks) return;
+        decks.forEach(deck => {
+            deck._source = source;
+            if (deck.cards) {
+                deck.cards.forEach(card => {
+                    card._source = source;
+                });
+            }
+        });
+    }
+
+    // Merge vault and localStorage data
+    mergeVaultAndLocalStorage(vaultDecks, localStorageDecks) {
+        const mergedDecks = [...vaultDecks]; // Start with vault as base
+        
+        localStorageDecks.forEach(localDeck => {
+            const existingDeckIndex = mergedDecks.findIndex(d => d.id === localDeck.id);
+            
+            if (existingDeckIndex >= 0) {
+                // Deck exists in vault, merge cards
+                const existingDeck = mergedDecks[existingDeckIndex];
+                
+                localDeck.cards?.forEach(localCard => {
+                    const existingCardIndex = existingDeck.cards?.findIndex(c => c.id === localCard.id) || -1;
+                    
+                    if (existingCardIndex >= 0) {
+                        // Card exists in vault, replace with localStorage version (modified)
+                        existingDeck.cards[existingCardIndex] = localCard;
+                    } else {
+                        // New card from localStorage
+                        if (!existingDeck.cards) existingDeck.cards = [];
+                        existingDeck.cards.push(localCard);
+                    }
+                });
+                
+                // Update deck properties if modified in localStorage
+                if (localDeck._source === 'localStorage') {
+                    mergedDecks[existingDeckIndex] = { ...existingDeck, ...localDeck, cards: existingDeck.cards };
+                }
+            } else {
+                // New deck from localStorage
+                mergedDecks.push(localDeck);
+            }
+        });
+        
+        return mergedDecks;
+    }
+
+    // Create backup vault.json
+    createBackup() {
         const data = {
             decks: this.decks,
             lastModified: new Date().toISOString(),
             version: "1.0.0"
         };
 
-        const jsonString = JSON.stringify(data, null, 2);
-        const blob = new Blob([jsonString], { type: 'application/json' });
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
-        
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'data.json';
+        a.download = 'vault.json';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         
-        alert('Archivo data.json generado. Reemplaza el archivo existente en la raíz del proyecto.');
+        // Show backup modal instead of alert
+        this.showBackupModal();
     }
-    
-    // Handle storage mode toggle
-    handleStorageToggle(e) {
-        console.log('Toggle clicked, isGitHubPages:', this.isGitHubPages);
-        console.log('Current hostname:', window.location.hostname);
-        
-        // Check if we're in web mode (GitHub Pages or any non-local environment)
-        if (!this.isLocal) {
-            // Prevent toggle and show warning
-            e.preventDefault();
-            setTimeout(() => {
-                e.target.checked = false;
-                alert(`⚠️ Modo Local no disponible en GitHub Pages\n\n` +
-                      `Los datos se almacenan temporalmente en localStorage del navegador.\n` +
-                      `Para no perder tus datos:\n` +
-                      `• Exporta regularmente a CSV\n` +
-                      `• Descarga el repositorio para uso local\n\n` +
-                      `Repositorio: https://github.com/vandalit/Deck-Backlog`);
-            }, 10);
-            return;
-        }
-        
-        // This shouldn't happen in current implementation but kept for safety
-        const newMode = e.target.checked ? 'local' : 'web';
-        this.storageMode = newMode;
-        this.updateStorageUI();
-        
-        // Reload data with new storage mode
-        this.loadData().then(() => {
-            this.render();
-            this.updateFilters();
-        });
-    }
+
 
     createDefaultDeck() {
         const defaultDeck = {
@@ -275,7 +310,11 @@ class IdeaDeckManager {
                 }
                 if (card.hashtags) {
                     card.hashtags.forEach(tag => {
-                        this.allHashtags.add(tag.toLowerCase());
+                        // Handle both string and array formats
+                        const cleanTag = typeof tag === 'string' 
+                            ? (tag.startsWith('#') ? tag.substring(1) : tag)
+                            : tag;
+                        this.allHashtags.add(cleanTag.toLowerCase());
                     });
                 }
             });
@@ -297,6 +336,15 @@ class IdeaDeckManager {
 
     parseHashtags(hashtagString) {
         if (!hashtagString) return [];
+        // Handle both string input and array input
+        if (Array.isArray(hashtagString)) {
+            return hashtagString.map(tag => {
+                if (typeof tag === 'string') {
+                    return tag.startsWith('#') ? tag.substring(1).toLowerCase() : tag.toLowerCase();
+                }
+                return tag;
+            });
+        }
         return hashtagString.split(/\s+/)
             .filter(tag => tag.startsWith('#'))
             .map(tag => tag.substring(1).toLowerCase());
@@ -490,6 +538,94 @@ class IdeaDeckManager {
         document.getElementById('deckModal').classList.remove('active');
         document.getElementById('cardModal').classList.remove('active');
         document.getElementById('cardDetailModal').classList.remove('active');
+        document.getElementById('backupModal').classList.remove('active');
+    }
+
+    // Backup Modal Management
+    showBackupModal() {
+        const modal = document.getElementById('backupModal');
+        modal.classList.add('active');
+    }
+
+    hideBackupModal() {
+        document.getElementById('backupModal').classList.remove('active');
+    }
+
+    // Update source indicator in detail view
+    updateSourceIndicator(card) {
+        const indicator = document.getElementById('detailSourceIndicator');
+        if (!indicator) return;
+
+        let iconClass, iconSymbol, statusText;
+
+        // Determine card source and modification status
+        if (!card._source || card._source === 'vault') {
+            // Original vault data, check if it has been modified
+            const hasLocalModifications = this.hasLocalModifications(card);
+            if (hasLocalModifications) {
+                iconClass = 'modified';
+                iconSymbol = 'fas fa-globe';
+                statusText = 'Modificado localmente';
+            } else {
+                iconClass = 'vault';
+                iconSymbol = 'fas fa-archive';
+                statusText = 'Datos originales';
+            }
+        } else if (card._source === 'localStorage') {
+            // Check if this is a completely new card or modified existing one
+            const existsInVault = this.existsInVault(card.id);
+            if (existsInVault) {
+                iconClass = 'modified';
+                iconSymbol = 'fas fa-globe';
+                statusText = 'Modificado localmente';
+            } else {
+                iconClass = 'new';
+                iconSymbol = 'fas fa-feather-alt';
+                statusText = 'Creado localmente';
+            }
+        }
+
+        // Update the indicator
+        indicator.innerHTML = `
+            <i class="source-icon ${iconClass} ${iconSymbol}"></i>
+            <span>${statusText}</span>
+        `;
+
+        // Add last modified date if available
+        if (card.updatedAt) {
+            const modifiedDate = this.formatDate(card.updatedAt);
+            indicator.innerHTML += `<span class="modified-date"> • ${modifiedDate}</span>`;
+        }
+    }
+
+    // Helper method to check if card has local modifications
+    hasLocalModifications(card) {
+        try {
+            const savedData = localStorage.getItem('cardsBacklog');
+            if (!savedData) return false;
+            
+            const localData = JSON.parse(savedData);
+            if (!localData.decks) return false;
+
+            // Look for the card in localStorage
+            for (const deck of localData.decks) {
+                if (deck.cards) {
+                    const localCard = deck.cards.find(c => c.id === card.id);
+                    if (localCard) return true;
+                }
+            }
+            return false;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    // Helper method to check if card exists in vault
+    existsInVault(cardId) {
+        // This would need access to the original vault data
+        // For now, we'll use a simple heuristic based on ID patterns
+        // Vault cards typically have structured IDs like "launch-card-001"
+        return cardId.includes('-card-') || cardId.includes('launch-') || cardId.includes('vault-');
     }
 
     // Detail Modal Management
@@ -531,6 +667,9 @@ class IdeaDeckManager {
         
         // Date
         document.getElementById('detailDate').textContent = this.formatDate(card.createdAt);
+        
+        // Source indicator
+        this.updateSourceIndicator(card);
         
         // Description
         const descElement = document.getElementById('detailDescription');
@@ -582,19 +721,25 @@ class IdeaDeckManager {
 
     editFromDetail() {
         console.log('Edit from detail clicked, currentDetailCard:', this.currentDetailCard);
+        console.log('Available decks:', this.decks.map(d => ({id: d.id, name: d.name})));
+        
         if (this.currentDetailCard && this.currentDetailCard.card) {
             this.hideDetailModal();
             // Find the actual card object from the deck
             const deck = this.decks.find(d => d.id === this.currentDetailCard.deckId);
-            if (deck) {
+            console.log('Found deck:', deck);
+            
+            if (deck && deck.cards) {
                 const card = deck.cards.find(c => c.id === this.currentDetailCard.card.id);
+                console.log('Found card:', card);
+                
                 if (card) {
                     this.showCardModal(this.currentDetailCard.deckId, card);
                 } else {
-                    console.error('Card not found in deck');
+                    console.error('Card not found in deck. Available cards:', deck.cards.map(c => c.id));
                 }
             } else {
-                console.error('Deck not found');
+                console.error('Deck not found or has no cards. Looking for deckId:', this.currentDetailCard.deckId);
             }
         } else {
             console.error('No currentDetailCard found for editing');

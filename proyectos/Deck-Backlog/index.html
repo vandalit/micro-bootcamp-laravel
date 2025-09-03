@@ -31,16 +31,10 @@
                                 <i class="fas fa-upload"></i>
                                 Importar CSV
                             </button>
-                            <div class="storage-toggle-section">
-                                <label class="storage-toggle">
-                                    <input type="checkbox" id="storageToggle">
-                                    <span class="toggle-slider"></span>
-                                    <span class="toggle-labels">
-                                        <span class="label-web">Web</span>
-                                        <span class="label-local">Local</span>
-                                    </span>
-                                </label>
-                            </div>
+                            <button id="backupBtn" class="data-btn">
+                                <i class="fas fa-save"></i>
+                                Crear Backup
+                            </button>
                             <button id="clearDataBtn" class="data-btn danger">
                                 <i class="fas fa-trash"></i>
                                 Limpiar Datos
@@ -167,7 +161,10 @@
                     <div class="detail-title-section">
                         <h1 class="detail-title" id="detailTitle"></h1>
                         <div class="detail-meta">
-                            <span class="detail-date" id="detailDate"></span>
+                            <div class="detail-date-info">
+                                <span class="detail-date" id="detailDate"></span>
+                                <div class="detail-source-indicator" id="detailSourceIndicator"></div>
+                            </div>
                             <div class="detail-actions">
                                 <button class="detail-action-btn" id="editDetailBtn" title="Editar">
                                     <i class="fas fa-edit"></i>
@@ -217,6 +214,46 @@
                             <div class="detail-images-grid" id="detailImages"></div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backup Instructions Modal -->
+    <div class="modal" id="backupModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="backupModalTitle">📦 Backup Creado Exitosamente</h3>
+                <button class="close-btn" id="closeBackupModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="backup-instructions">
+                <div class="backup-success">
+                    <i class="fas fa-check-circle"></i>
+                    <p>Tu archivo <code>vault.json</code> ha sido descargado con todos los datos actualizados.</p>
+                </div>
+                
+                <div class="backup-steps">
+                    <h4>📋 Instrucciones para Versión Local:</h4>
+                    <ol>
+                        <li>Descarga el proyecto desde: <a href="https://github.com/vandalit/Deck-Backlog" target="_blank" rel="noopener">
+                            <i class="fab fa-github"></i> GitHub Repository
+                        </a></li>
+                        <li>Reemplaza el archivo <code>vault.json</code> en el directorio raíz del proyecto</li>
+                        <li>Actualiza tu navegador para ver los cambios</li>
+                    </ol>
+                </div>
+                
+                <div class="backup-note">
+                    <i class="fas fa-info-circle"></i>
+                    <p><strong>Nota:</strong> Este backup incluye todas las modificaciones realizadas desde localStorage.</p>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-primary" id="confirmBackupBtn">
+                        <i class="fas fa-thumbs-up"></i> Entiendo
+                    </button>
                 </div>
             </div>
         </div>

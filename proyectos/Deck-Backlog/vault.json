@@ -1,0 +1,89 @@
+{
+  "decks": [
+    {
+      "id": "launch-deck-001",
+      "name": "🚀 Deck-Backlog Launch",
+      "description": "Ideas y funcionalidades para el lanzamiento de Deck-Backlog",
+      "cards": [
+        {
+          "id": "launch-card-001",
+          "title": "Sistema de Persistencia Vault",
+          "category": "desarrollo",
+          "description": "Implementar sistema híbrido vault.json + localStorage para persistencia de datos",
+          "notes": "✅ Completado: Sistema que carga vault.json como base y localStorage como capa de modificaciones. Incluye backup automático y tracking de origen de datos.",
+          "hashtags": [
+            "#persistencia",
+            "#vault",
+            "#localStorage",
+            "#backup"
+          ],
+          "images": [],
+          "createdAt": "2025-09-03T17:28:00.000Z"
+        },
+        {
+          "id": "launch-card-002",
+          "title": "Indicadores Visuales de Estado",
+          "category": "diseño",
+          "description": "Agregar iconos que muestren el origen de los datos (vault vs localStorage)",
+          "notes": "🔄 En progreso: Iconos de mundo para datos modificados (localStorage) y bóveda para datos originales (vault). Ayuda a usuarios identificar qué necesita backup.",
+          "hashtags": [
+            "#ui",
+            "#iconos",
+            "#estado",
+            "#visual"
+          ],
+          "images": [],
+          "createdAt": "2025-09-03T17:29:00.000Z"
+        },
+        {
+          "id": "launch-card-003",
+          "title": "Botón de Backup Inteligente",
+          "category": "funcionalidad",
+          "description": "Crear función de backup que genere vault.json actualizado con instrucciones",
+          "notes": "🔄 En progreso: Botón en dropdown que descarga vault.json con todos los cambios actuales e instrucciones para reemplazar en proyecto local.",
+          "hashtags": [
+            "#backup",
+            "#export",
+            "#vault",
+            "#instrucciones"
+          ],
+          "images": [],
+          "createdAt": "2025-09-03T17:30:00.000Z"
+        },
+        {
+          "id": "launch-card-004",
+          "title": "Demo Deck Atractivo",
+          "category": "contenido",
+          "description": "Crear deck de demostración que muestre las capacidades del sistema",
+          "notes": "✅ Este mismo deck! Muestra diferentes estados, categorías, hashtags y el flujo completo de la aplicación para nuevos usuarios.",
+          "hashtags": [
+            "#demo",
+            "#showcase",
+            "#onboarding",
+            "#ejemplo"
+          ],
+          "images": [],
+          "createdAt": "2025-09-03T17:31:00.000Z"
+        },
+        {
+          "id": "launch-card-005",
+          "title": "Documentación GitHub",
+          "category": "documentacion",
+          "description": "Actualizar README con instrucciones del nuevo sistema vault",
+          "notes": "📝 Pendiente: Explicar el flujo vault.json → localStorage → backup, instrucciones de instalación local, y guía de uso.",
+          "hashtags": [
+            "#docs",
+            "#readme",
+            "#github",
+            "#instrucciones"
+          ],
+          "images": [],
+          "createdAt": "2025-09-03T17:32:00.000Z"
+        }
+      ],
+      "createdAt": "2025-09-03T17:28:00.000Z"
+    }
+  ],
+  "lastModified": "2025-09-03T17:32:00.000Z",
+  "version": "1.0.0"
+}

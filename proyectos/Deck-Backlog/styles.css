@@ -209,79 +209,6 @@ body {
     color: var(--bg-primary);
 }
 
-/* Storage Toggle Section */
-.storage-toggle-section {
-    padding: var(--spacing-sm);
-    border-top: 1px solid var(--border-color);
-    border-bottom: 1px solid var(--border-color);
-    margin: var(--spacing-xs) 0;
-}
-
-.storage-toggle {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    cursor: pointer;
-    user-select: none;
-}
-
-.storage-toggle input[type="checkbox"] {
-    display: none;
-}
-
-.toggle-slider {
-    position: relative;
-    width: 50px;
-    height: 24px;
-    background: var(--accent-lime);
-    border-radius: 12px;
-    transition: all 0.3s ease;
-}
-
-.toggle-slider::before {
-    content: '';
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 20px;
-    height: 20px;
-    background: white;
-    border-radius: 50%;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-.storage-toggle input:checked + .toggle-slider {
-    background: var(--accent-cyan);
-}
-
-.storage-toggle input:checked + .toggle-slider::before {
-    transform: translateX(26px);
-}
-
-.toggle-labels {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-    font-size: 0.8rem;
-    font-weight: 600;
-}
-
-.label-web {
-    color: var(--accent-lime);
-}
-
-.label-local {
-    color: var(--accent-cyan);
-}
-
-.storage-toggle input:not(:checked) ~ .toggle-labels .label-local {
-    opacity: 0.5;
-}
-
-.storage-toggle input:checked ~ .toggle-labels .label-web {
-    opacity: 0.5;
-}
 
 /* Migration Modal */
 .migration-modal .modal-content {
@@ -999,6 +926,12 @@ form {
     margin-top: var(--spacing-sm);
 }
 
+.detail-date-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
 .detail-date {
     color: var(--text-secondary);
     font-size: 0.9rem;
@@ -1010,6 +943,33 @@ form {
 .detail-date::before {
     content: '📅';
     font-size: 1rem;
+}
+
+.detail-source-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.source-icon {
+    font-size: 0.9rem;
+    width: 16px;
+    text-align: center;
+}
+
+.source-icon.vault {
+    color: var(--accent-purple);
+}
+
+.source-icon.modified {
+    color: var(--accent-cyan);
+}
+
+.source-icon.new {
+    color: var(--accent-lime);
 }
 
 .detail-actions {
@@ -1190,6 +1150,11 @@ form {
         flex-direction: column;
         align-items: center;
         gap: var(--spacing-sm);
+    }
+    
+    .detail-date-info {
+        align-items: center;
+        text-align: center;
     }
     
     .detail-images-grid {
