@@ -5,8 +5,6 @@ class IdeaDeckManager {
         this.currentEditingCard = null;
         this.allCategories = new Set();
         this.allHashtags = new Set();
-        this.storageMode = 'web'; // 'web' (localStorage) or 'local' (JSON)
-        this.isGitHubPages = false;
         
         this.init();
     }
@@ -25,47 +23,10 @@ class IdeaDeckManager {
                       window.location.hostname === 'localhost' || 
                       window.location.hostname === '127.0.0.1';
         
-        this.isGitHubPages = window.location.hostname === 'vandalit.github.io';
-        
-        // Set storage mode based on environment
-        if (this.isGitHubPages) {
-            this.storageMode = 'web';
-        } else if (this.isLocal) {
-            this.storageMode = 'local';
-        } else {
-            this.storageMode = 'web';
-        }
-        
-        // Update UI based on environment
-        this.updateStorageUI();
-        
         // Show/hide local-only features
         const localBtn = document.getElementById('localBtn');
         if (localBtn) {
             localBtn.style.display = this.isLocal ? 'flex' : 'none';
-        }
-    }
-    
-    updateStorageUI() {
-        const storageChip = document.getElementById('storageChip');
-        const storageToggle = document.getElementById('storageToggle');
-        
-        if (storageChip) {
-            if (this.isGitHubPages) {
-                storageChip.textContent = 'Web';
-                storageChip.className = 'storage-chip web';
-            } else if (this.isLocal) {
-                storageChip.textContent = 'Local';
-                storageChip.className = 'storage-chip local';
-            }
-        }
-        
-        if (storageToggle) {
-            storageToggle.checked = this.storageMode === 'local';
-            // Don't disable the toggle - let the event handler show the warning
-            if (this.isGitHubPages) {
-                console.log('GitHub Pages detected - toggle will show warning when clicked');
-            }
         }
     }
 
@@ -79,13 +40,6 @@ class IdeaDeckManager {
         document.getElementById('exportBtn').addEventListener('click', () => this.exportToCSV());
         document.getElementById('importBtn').addEventListener('click', () => this.importFromCSV());
         document.getElementById('clearDataBtn').addEventListener('click', () => this.clearData());
-        
-        // Storage toggle
-        const storageToggle = document.getElementById('storageToggle');
-        if (storageToggle) {
-            storageToggle.addEventListener('click', (e) => this.handleStorageToggle(e));
-            storageToggle.addEventListener('change', (e) => this.handleStorageToggle(e));
-        }
         
         // Local-only feature
         const localBtn = document.getElementById('localBtn');
@@ -111,22 +65,8 @@ class IdeaDeckManager {
         
         // Detail modal events
         document.getElementById('closeDetailModal').addEventListener('click', () => this.hideDetailModal());
-        
-        // Detail modal events - use event delegation
-        document.addEventListener('click', (e) => {
-            if (e.target.id === 'editDetailBtn' || e.target.closest('#editDetailBtn')) {
-                console.log('Edit detail button clicked via delegation');
-                e.preventDefault();
-                e.stopPropagation();
-                this.editFromDetail();
-            }
-            if (e.target.id === 'deleteDetailBtn' || e.target.closest('#deleteDetailBtn')) {
-                console.log('Delete detail button clicked via delegation');
-                e.preventDefault();
-                e.stopPropagation();
-                this.deleteFromDetail();
-            }
-        });
+        document.getElementById('editDetailBtn').addEventListener('click', () => this.editFromDetail());
+        document.getElementById('deleteDetailBtn').addEventListener('click', () => this.deleteFromDetail());
         
         // Close modals on outside click
         document.addEventListener('click', (e) => {
@@ -148,108 +88,47 @@ class IdeaDeckManager {
 
     // Data Management
     async loadData() {
-        if (this.storageMode === 'web') {
-            // GitHub Pages or web mode - use localStorage only
-            const savedData = localStorage.getItem('cardsBacklog');
-            if (savedData) {
-                try {
-                    const data = JSON.parse(savedData);
-                    this.decks = data.decks || [];
-                    this.updateCategoriesAndHashtags();
-                    return;
-                } catch (error) {
-                    console.error('Error loading localStorage data:', error);
-                }
+        // Try to load from localStorage first
+        const savedData = localStorage.getItem('cardsBacklog');
+        if (savedData) {
+            try {
+                const data = JSON.parse(savedData);
+                this.decks = data.decks || [];
+                this.updateCategoriesAndHashtags();
+                return;
+            } catch (error) {
+                console.error('Error loading localStorage data:', error);
             }
-        } else if (this.storageMode === 'local') {
-            // Local mode - use JSON only
+        }
+        
+        // If no localStorage data and running locally, try to load from data.json
+        if (this.isLocal) {
             try {
                 const response = await fetch('./data.json');
                 if (response.ok) {
                     const data = await response.json();
                     this.decks = data.decks || [];
                     this.updateCategoriesAndHashtags();
+                    // Save to localStorage for future use
+                    this.saveData();
                     return;
                 }
             } catch (error) {
                 console.log('No data.json found or error loading it:', error);
             }
         }
-
+        
         // Default empty state
         this.decks = [];
         this.createDefaultDeck();
     }
 
     saveData() {
-        if (this.storageMode === 'web') {
-            // Save to localStorage
-            const data = {
-                decks: this.decks,
-                lastModified: new Date().toISOString()
-            };
-            localStorage.setItem('cardsBacklog', JSON.stringify(data));
-        } else if (this.storageMode === 'local') {
-            // In local mode, data is automatically saved when modified
-            // The user manually replaces data.json when needed
-            console.log('Local mode: Changes saved in memory. Replace data.json manually when needed.');
-        }
-    }
-    
-    // Manual export to JSON (for local mode backup)
-    saveToJSON() {
         const data = {
             decks: this.decks,
-            lastModified: new Date().toISOString(),
-            version: "1.0.0"
+            lastModified: new Date().toISOString()
         };
-
-        const jsonString = JSON.stringify(data, null, 2);
-        const blob = new Blob([jsonString], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'data.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        alert('Archivo data.json generado. Reemplaza el archivo existente en la raíz del proyecto.');
-    }
-    
-    // Handle storage mode toggle
-    handleStorageToggle(e) {
-        console.log('Toggle clicked, isGitHubPages:', this.isGitHubPages);
-        console.log('Current hostname:', window.location.hostname);
-        
-        // Check if we're in web mode (GitHub Pages or any non-local environment)
-        if (!this.isLocal) {
-            // Prevent toggle and show warning
-            e.preventDefault();
-            setTimeout(() => {
-                e.target.checked = false;
-                alert(`⚠️ Modo Local no disponible en GitHub Pages\n\n` +
-                      `Los datos se almacenan temporalmente en localStorage del navegador.\n` +
-                      `Para no perder tus datos:\n` +
-                      `• Exporta regularmente a CSV\n` +
-                      `• Descarga el repositorio para uso local\n\n` +
-                      `Repositorio: https://github.com/vandalit/Deck-Backlog`);
-            }, 10);
-            return;
-        }
-        
-        // This shouldn't happen in current implementation but kept for safety
-        const newMode = e.target.checked ? 'local' : 'web';
-        this.storageMode = newMode;
-        this.updateStorageUI();
-        
-        // Reload data with new storage mode
-        this.loadData().then(() => {
-            this.render();
-            this.updateFilters();
-        });
+        localStorage.setItem('cardsBacklog', JSON.stringify(data));
     }
 
     createDefaultDeck() {
@@ -494,7 +373,6 @@ class IdeaDeckManager {
 
     // Detail Modal Management
     showDetailModal(deckId, card) {
-        console.log('Setting currentDetailCard:', { deckId, card });
         this.currentDetailCard = { deckId, card };
         const modal = document.getElementById('cardDetailModal');
         
@@ -581,23 +459,9 @@ class IdeaDeckManager {
     }
 
     editFromDetail() {
-        console.log('Edit from detail clicked, currentDetailCard:', this.currentDetailCard);
-        if (this.currentDetailCard && this.currentDetailCard.card) {
+        if (this.currentDetailCard) {
             this.hideDetailModal();
-            // Find the actual card object from the deck
-            const deck = this.decks.find(d => d.id === this.currentDetailCard.deckId);
-            if (deck) {
-                const card = deck.cards.find(c => c.id === this.currentDetailCard.card.id);
-                if (card) {
-                    this.showCardModal(this.currentDetailCard.deckId, card);
-                } else {
-                    console.error('Card not found in deck');
-                }
-            } else {
-                console.error('Deck not found');
-            }
-        } else {
-            console.error('No currentDetailCard found for editing');
+            this.showCardModal(this.currentDetailCard.deckId, this.currentDetailCard.card);
         }
     }
 
@@ -1125,9 +989,32 @@ class IdeaDeckManager {
         }
     }
 
-    // Generate static JSON file for local development (legacy - now handled by saveToJSON)
+    // Generate static JSON file for local development
     generateLocalJSON() {
-        this.saveToJSON();
+        if (!this.isLocal) {
+            alert('Esta función solo está disponible en entorno local.');
+            return;
+        }
+
+        const data = {
+            decks: this.decks,
+            lastModified: new Date().toISOString(),
+            version: "1.0.0"
+        };
+
+        const jsonString = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'data.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        alert('Archivo data.json generado. Colócalo en la raíz del proyecto para datos iniciales.');
     }
 }
 
