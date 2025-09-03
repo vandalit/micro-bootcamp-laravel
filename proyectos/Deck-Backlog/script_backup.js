@@ -1189,14 +1189,6 @@ class IdeaDeckManager {
                 <div class="card-header">
                     <div class="card-title">${card.title}</div>
                     <div class="card-actions">
-                        <div class="card-reorder-buttons">
-                            <button class="card-reorder-btn" onclick="event.stopPropagation(); app.moveCardUp('${deckId}', '${card.id}')" title="Subir">
-                                <i class="fas fa-chevron-up"></i>
-                            </button>
-                            <button class="card-reorder-btn" onclick="event.stopPropagation(); app.moveCardDown('${deckId}', '${card.id}')" title="Bajar">
-                                <i class="fas fa-chevron-down"></i>
-                            </button>
-                        </div>
                         <div class="drag-handle" draggable="true" title="Arrastrar para mover">
                             <i class="fas fa-grip-vertical"></i>
                         </div>
@@ -1251,50 +1243,50 @@ class IdeaDeckManager {
 
         // Enhanced drag over for same deck vs different deck
         cardsGrid.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            const draggingCard = document.querySelector('.dragging');
-            if (!draggingCard) return;
+        e.preventDefault();
+        const draggingCard = document.querySelector('.dragging');
+        if (!draggingCard) return;
 
-            const draggingFromDeckId = draggingCard.dataset.deckId;
+        const draggingFromDeckId = draggingCard.dataset.deckId;
 
-            if (draggingFromDeckId === deckId) {
-                // Same deck - show placeholder for reordering
-                this.showCardPlaceholder(e, cardsGrid, deckId);
-            } else {
-                // Different deck - show "soltar aquí" animation
-                deckElement.classList.add('drop-zone-active');
-            }
-        });
+        if (draggingFromDeckId === deckId) {
+            // Same deck - show placeholder for reordering
+            this.showCardPlaceholder(e, cardsGrid, deckId);
+        } else {
+            // Different deck - show "soltar aquí" animation
+            deckElement.classList.add('drop-zone-active');
+        }
+    });
 
-        cardsGrid.addEventListener('dragleave', (e) => {
-            const rect = cardsGrid.getBoundingClientRect();
-            if (e.clientX < rect.left || e.clientX > rect.right || 
-                e.clientY < rect.top || e.clientY > rect.bottom) {
-                deckElement.classList.remove('drop-zone-active');
-                // Remove placeholders when leaving
-                cardsGrid.querySelectorAll('.card-drop-placeholder').forEach(p => p.remove());
-            }
-        });
-
-        cardsGrid.addEventListener('drop', (e) => {
-            e.preventDefault();
+    cardsGrid.addEventListener('dragleave', (e) => {
+        const rect = cardsGrid.getBoundingClientRect();
+        if (e.clientX < rect.left || e.clientX > rect.right || 
+            e.clientY < rect.top || e.clientY > rect.bottom) {
             deckElement.classList.remove('drop-zone-active');
+            // Remove placeholders when leaving
+            cardsGrid.querySelectorAll('.card-drop-placeholder').forEach(p => p.remove());
+        }
+    });
 
-            try {
-                const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-                console.log('Moving card:', data.cardId, 'from', data.fromDeckId, 'to', deckId);
+    cardsGrid.addEventListener('drop', (e) => {
+        e.preventDefault();
+        deckElement.classList.remove('drop-zone-active');
 
-                if (data.fromDeckId !== deckId) {
-                    // Moving between different decks
-                    this.moveCard(data.cardId, data.fromDeckId, deckId);
-                } else {
-                    // Reordering within same deck
-                    this.reorderCardsInDeckWithPlaceholder(deckId, e);
-                }
-            } catch (error) {
-                console.error('Error moving card:', error);
+        try {
+            const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+            console.log('Moving card:', data.cardId, 'from', data.fromDeckId, 'to', deckId);
+
+            if (data.fromDeckId !== deckId) {
+                // Moving between different decks
+                this.moveCard(data.cardId, data.fromDeckId, deckId);
+            } else {
+                // Reordering within same deck
+                this.reorderCardsInDeckWithPlaceholder(deckId, e);
             }
-        });
+        } catch (error) {
+            console.error('Error moving card:', error);
+        }
+    });
 }
 
 // Helper function to get the element after which to insert the dragged item
@@ -1443,10 +1435,9 @@ addDragAndDropToDecks(deckElement, deckId) {
         
         this.containerDropHandlerAdded = true;
     }
-}
 
-// Get drop position for cards moved between decks
-getDropPosition(e, cardsGrid) {
+    // Get drop position for cards moved between decks
+    getDropPosition(e, cardsGrid) {
         const cardElements = [...cardsGrid.querySelectorAll('.card')];
         let position = cardElements.length; // Default to end
         
@@ -1756,127 +1747,6 @@ getDropPosition(e, cardsGrid) {
             this.render();
             this.updateFilters();
         }
-    }
-
-    // Show placeholder for card reordering within same deck
-    showCardPlaceholder(e, cardsGrid, deckId) {
-        // Remove existing placeholders
-        cardsGrid.querySelectorAll('.card-drop-placeholder').forEach(p => p.remove());
-        
-        const afterElement = this.getDragAfterElement(cardsGrid, e.clientY);
-        
-        const placeholder = document.createElement('div');
-        placeholder.className = 'card-drop-placeholder active';
-        
-        if (afterElement) {
-            cardsGrid.insertBefore(placeholder, afterElement);
-        } else {
-            cardsGrid.appendChild(placeholder);
-        }
-    }
-
-    // Reorder cards within same deck using placeholder position
-    reorderCardsInDeckWithPlaceholder(deckId, e) {
-        const deck = this.decks.find(d => d.id === deckId);
-        if (!deck) return;
-        
-        const draggingCard = document.querySelector('.dragging');
-        if (!draggingCard) return;
-        
-        const cardId = draggingCard.dataset.cardId;
-        const card = deck.cards.find(c => c.id === cardId);
-        if (!card) return;
-        
-        const cardsGrid = draggingCard.closest('.cards-grid');
-        const placeholder = cardsGrid.querySelector('.card-drop-placeholder.active');
-        
-        if (placeholder) {
-            // Get new position based on placeholder
-            const allElements = [...cardsGrid.children];
-            const placeholderIndex = allElements.indexOf(placeholder);
-            
-            // Remove card from current position
-            const currentIndex = deck.cards.findIndex(c => c.id === cardId);
-            if (currentIndex !== -1) {
-                deck.cards.splice(currentIndex, 1);
-            }
-            
-            // Calculate new position (accounting for removed card and add-card button)
-            let newPosition = placeholderIndex;
-            if (placeholderIndex > currentIndex) {
-                newPosition--;
-            }
-            
-            // Insert at new position
-            deck.cards.splice(newPosition, 0, card);
-            
-            // Update order indices
-            deck.cards.forEach((c, index) => {
-                c.order = index;
-            });
-            
-            this.saveData();
-            this.render();
-        }
-        
-        // Clean up placeholders
-        cardsGrid.querySelectorAll('.card-drop-placeholder').forEach(p => p.remove());
-    }
-
-    // Move card up in the same deck
-    moveCardUp(deckId, cardId) {
-        const deck = this.decks.find(d => d.id === deckId);
-        if (!deck) return;
-        
-        const cardIndex = deck.cards.findIndex(c => c.id === cardId);
-        if (cardIndex <= 0) return; // Already at top or not found
-        
-        // Swap with previous card
-        [deck.cards[cardIndex - 1], deck.cards[cardIndex]] = [deck.cards[cardIndex], deck.cards[cardIndex - 1]];
-        
-        // Update order indices
-        deck.cards.forEach((c, index) => {
-            c.order = index;
-        });
-        
-        this.saveData();
-        this.render();
-    }
-
-    // Move card down in the same deck
-    moveCardDown(deckId, cardId) {
-        const deck = this.decks.find(d => d.id === deckId);
-        if (!deck) return;
-        
-        const cardIndex = deck.cards.findIndex(c => c.id === cardId);
-        if (cardIndex === -1 || cardIndex >= deck.cards.length - 1) return; // Already at bottom or not found
-        
-        // Swap with next card
-        [deck.cards[cardIndex], deck.cards[cardIndex + 1]] = [deck.cards[cardIndex + 1], deck.cards[cardIndex]];
-        
-        // Update order indices
-        deck.cards.forEach((c, index) => {
-            c.order = index;
-        });
-        
-        this.saveData();
-        this.render();
-    }
-
-    // Helper function to get the element after which to insert the dragged item
-    getDragAfterElement(container, y) {
-        const draggableElements = [...container.querySelectorAll('.card:not(.dragging)')];
-
-        return draggableElements.reduce((closest, child) => {
-            const box = child.getBoundingClientRect();
-            const offset = y - box.top - box.height / 2;
-
-            if (offset < 0 && offset > closest.offset) {
-                return { offset: offset, element: child };
-            } else {
-                return closest;
-            }
-        }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
     // Generate static JSON file for local development (legacy - now handled by saveToJSON)

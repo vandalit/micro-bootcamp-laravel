@@ -521,20 +521,14 @@ body {
 }
 
 .card.simplified .card-description,
-.card.simplified .card-images-section {
+.card.simplified .card-images-section,
+.card.simplified .card-category,
+.card.simplified .card-hashtags {
     display: none;
 }
 
 .card.simplified .card-header {
     margin-bottom: 0;
-}
-
-.card.simplified .card-category {
-    margin: var(--spacing-xs) 0;
-}
-
-.card.simplified .card-hashtags {
-    margin-top: var(--spacing-xs);
 }
 
 .card:hover {
@@ -1380,14 +1374,13 @@ body.dragging-card .deck:not(.drop-zone-active) {
     transition: opacity 0.2s ease;
 }
 
-.deck.drop-zone-active {
+.drop-zone-active {
     border: 2px dashed var(--accent-cyan);
-    background: rgba(0, 255, 255, 0.1);
-    transform: scale(1.02);
-    transition: all 0.2s ease;
+    background: rgba(0, 255, 255, 0.05);
+    position: relative;
 }
 
-.deck.drop-zone-active::before {
+.drop-zone-active::after {
     content: "Soltar aquí";
     position: absolute;
     top: 50%;
@@ -1395,11 +1388,80 @@ body.dragging-card .deck:not(.drop-zone-active) {
     transform: translate(-50%, -50%);
     background: var(--accent-cyan);
     color: var(--bg-primary);
-    padding: 8px 16px;
-    border-radius: var(--radius-sm);
-    font-weight: bold;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.9rem;
     z-index: 10;
     pointer-events: none;
+    animation: dropZonePulse 1s ease-in-out infinite alternate;
+}
+
+.card-drop-placeholder {
+    height: 4px;
+    background: linear-gradient(90deg, #00ff88, #00cc6a);
+    border-radius: 2px;
+    margin: 8px 0;
+    opacity: 0;
+    transform: scaleX(0);
+    transition: all 0.2s ease;
+    box-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
+}
+
+.card-drop-placeholder.active {
+    opacity: 1;
+    transform: scaleX(1);
+    animation: pulse-green 1s infinite;
+}
+
+@keyframes pulse-green {
+    0%, 100% { 
+        box-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
+        background: linear-gradient(90deg, #00ff88, #00cc6a);
+    }
+    50% { 
+        box-shadow: 0 0 16px rgba(0, 255, 136, 0.8);
+        background: linear-gradient(90deg, #00cc6a, #00ff88);
+    }
+}
+
+/* Card reorder buttons */
+.card-reorder-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-right: 8px;
+}
+
+.card-reorder-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: var(--text-color);
+    cursor: pointer;
+    padding: 4px 6px;
+    font-size: 10px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 16px;
+}
+
+.card-reorder-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+    transform: scale(1.1);
+}
+
+.card-reorder-btn:active {
+    transform: scale(0.95);
+}
+
+.card-reorder-btn i {
+    font-size: 8px;
 }
 
 /* Empty States */
