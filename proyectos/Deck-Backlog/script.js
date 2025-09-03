@@ -1258,8 +1258,9 @@ class IdeaDeckManager {
             const draggingFromDeckId = draggingCard.dataset.deckId;
 
             if (draggingFromDeckId === deckId) {
-                // Same deck - show placeholder for reordering
-                this.showCardPlaceholder(e, cardsGrid, deckId);
+                // Same deck - disable placeholder, use arrows for reordering
+                // No visual feedback for same-deck drag
+                return;
             } else {
                 // Different deck - show "soltar aquí" animation
                 deckElement.classList.add('drop-zone-active');
@@ -1285,11 +1286,11 @@ class IdeaDeckManager {
                 console.log('Moving card:', data.cardId, 'from', data.fromDeckId, 'to', deckId);
 
                 if (data.fromDeckId !== deckId) {
-                    // Moving between different decks
+                    // Moving between different decks - this still works
                     this.moveCard(data.cardId, data.fromDeckId, deckId);
                 } else {
-                    // Reordering within same deck
-                    this.reorderCardsInDeckWithPlaceholder(deckId, e);
+                    // Same deck - do nothing, use arrows for reordering
+                    console.log('Same deck drag disabled - use arrow buttons for reordering');
                 }
             } catch (error) {
                 console.error('Error moving card:', error);
@@ -1763,15 +1764,66 @@ getDropPosition(e, cardsGrid) {
         // Remove existing placeholders
         cardsGrid.querySelectorAll('.card-drop-placeholder').forEach(p => p.remove());
         
-        const afterElement = this.getDragAfterElement(cardsGrid, e.clientY);
+        const cards = [...cardsGrid.querySelectorAll('.card:not(.dragging)')];
+        const mouseY = e.clientY;
+        const cardsGridRect = cardsGrid.getBoundingClientRect();
         
+        // Create placeholder
         const placeholder = document.createElement('div');
         placeholder.className = 'card-drop-placeholder active';
         
-        if (afterElement) {
-            cardsGrid.insertBefore(placeholder, afterElement);
-        } else {
-            cardsGrid.appendChild(placeholder);
+        let inserted = false;
+        
+        // Check if mouse is above all cards (insert at beginning)
+        if (cards.length > 0) {
+            const firstCardRect = cards[0].getBoundingClientRect();
+            if (mouseY < firstCardRect.top) {
+                cardsGrid.insertBefore(placeholder, cards[0]);
+                inserted = true;
+            }
+        }
+        
+        // Check between cards
+        if (!inserted && cards.length > 1) {
+            for (let i = 0; i < cards.length - 1; i++) {
+                const currentCardRect = cards[i].getBoundingClientRect();
+                const nextCardRect = cards[i + 1].getBoundingClientRect();
+                
+                const currentCardBottom = currentCardRect.bottom;
+                const nextCardTop = nextCardRect.top;
+                
+                // If mouse is between current card bottom and next card top
+                if (mouseY >= currentCardBottom && mouseY <= nextCardTop) {
+                    cardsGrid.insertBefore(placeholder, cards[i + 1]);
+                    inserted = true;
+                    break;
+                }
+            }
+        }
+        
+        // If not inserted yet, check if mouse is below all cards (insert at end)
+        if (!inserted && cards.length > 0) {
+            const lastCardRect = cards[cards.length - 1].getBoundingClientRect();
+            if (mouseY > lastCardRect.bottom) {
+                // Insert at the end, but before the add-card button if it exists
+                const addCardBtn = cardsGrid.querySelector('.add-card-btn');
+                if (addCardBtn) {
+                    cardsGrid.insertBefore(placeholder, addCardBtn);
+                } else {
+                    cardsGrid.appendChild(placeholder);
+                }
+                inserted = true;
+            }
+        }
+        
+        // Fallback: if no cards or couldn't determine position, insert at end
+        if (!inserted) {
+            const addCardBtn = cardsGrid.querySelector('.add-card-btn');
+            if (addCardBtn) {
+                cardsGrid.insertBefore(placeholder, addCardBtn);
+            } else {
+                cardsGrid.appendChild(placeholder);
+            }
         }
     }
 
@@ -1791,32 +1843,48 @@ getDropPosition(e, cardsGrid) {
         const placeholder = cardsGrid.querySelector('.card-drop-placeholder.active');
         
         if (placeholder) {
-            // Get new position based on placeholder
-            const allElements = [...cardsGrid.children];
-            const placeholderIndex = allElements.indexOf(placeholder);
+            // Get all DOM elements in the cards grid
+            const allGridElements = [...cardsGrid.children];
+            const placeholderDOMIndex = allGridElements.indexOf(placeholder);
             
-            // Remove card from current position
-            const currentIndex = deck.cards.findIndex(c => c.id === cardId);
-            if (currentIndex !== -1) {
-                deck.cards.splice(currentIndex, 1);
+            // Get all visible cards (excluding dragging card)
+            const visibleCards = [...cardsGrid.querySelectorAll('.card:not(.dragging)')];
+            
+            // Calculate new position by counting visible cards before placeholder
+            let newPosition = 0;
+            for (let i = 0; i < visibleCards.length; i++) {
+                const cardDOMIndex = allGridElements.indexOf(visibleCards[i]);
+                if (cardDOMIndex < placeholderDOMIndex) {
+                    newPosition++;
+                }
             }
             
-            // Calculate new position (accounting for removed card and add-card button)
-            let newPosition = placeholderIndex;
-            if (placeholderIndex > currentIndex) {
-                newPosition--;
+            // Find current position in deck array
+            const currentCardIndex = deck.cards.findIndex(c => c.id === cardId);
+            
+            console.log(`Moving "${card.title}" from array position ${currentCardIndex} to ${newPosition}`);
+            
+            // Only move if position actually changed
+            if (currentCardIndex !== newPosition) {
+                // Remove card from current position
+                deck.cards.splice(currentCardIndex, 1);
+                
+                // Adjust new position if we removed a card before the target position
+                if (currentCardIndex < newPosition) {
+                    newPosition--;
+                }
+                
+                // Insert at new position
+                deck.cards.splice(newPosition, 0, card);
+                
+                // Update order indices
+                deck.cards.forEach((c, index) => {
+                    c.order = index;
+                });
+                
+                this.saveData();
+                this.render();
             }
-            
-            // Insert at new position
-            deck.cards.splice(newPosition, 0, card);
-            
-            // Update order indices
-            deck.cards.forEach((c, index) => {
-                c.order = index;
-            });
-            
-            this.saveData();
-            this.render();
         }
         
         // Clean up placeholders
