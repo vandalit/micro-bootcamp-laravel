@@ -165,107 +165,56 @@ class IdeaDeckManager {
 
     // Data Management
     async loadData() {
-        console.log('Loading data: vault.json first, then localStorage merge...');
+        // Simplified: Single source of truth approach
+        let loadedData = null;
         
-        // Step 1: Always load vault.json as base data
-        let vaultData = null;
-        try {
-            const response = await fetch('./vault.json');
-            if (response.ok) {
-                vaultData = await response.json();
-                this.vaultData = JSON.parse(JSON.stringify(vaultData)); // Deep copy for comparison
-                console.log('Vault data loaded:', vaultData);
-                // Mark all vault data with source
-                this.markDataSource(vaultData.decks, 'vault');
-            }
-        } catch (error) {
-            console.log('No vault.json found or error loading it:', error);
-        }
-        
-        // Step 2: Load localStorage modifications
-        let localStorageData = null;
+        // Step 1: Try localStorage first (user's working data)
         try {
             const savedData = localStorage.getItem('cardsBacklog');
             if (savedData) {
-                localStorageData = JSON.parse(savedData);
-                console.log('localStorage data loaded:', localStorageData);
-                // Mark all localStorage data with source
-                this.markDataSource(localStorageData.decks, 'localStorage');
+                loadedData = JSON.parse(savedData);
+                console.log('Data loaded from localStorage');
             }
         } catch (error) {
-            console.error('Error loading localStorage data:', error);
+            console.error('Error loading localStorage:', error);
         }
         
-        // Step 3: Merge data (vault as base, localStorage as modifications/additions)
-        this.decks = this.mergeVaultAndLocalStorage(vaultData?.decks || [], localStorageData?.decks || []);
+        // Step 2: If no localStorage, load vault.json as initial data (first time only)
+        if (!loadedData) {
+            try {
+                const response = await fetch('./vault.json');
+                if (response.ok) {
+                    loadedData = await response.json();
+                    console.log('Initial data loaded from vault.json');
+                    // Save to localStorage immediately to establish single source
+                    this.decks = loadedData.decks || [];
+                    this.saveData();
+                }
+            } catch (error) {
+                console.log('No vault.json found:', error);
+            }
+        } else {
+            this.decks = loadedData.decks || [];
+        }
         
-        // Step 4: If no data at all, create default
+        // Step 3: If still no data, create default
         if (this.decks.length === 0) {
             this.createDefaultDeck();
         }
         
         this.updateCategoriesAndHashtags();
-        console.log('Final merged data:', this.decks);
+        console.log('Data loaded successfully:', this.decks.length, 'decks');
     }
 
     saveData() {
-        // Always save to localStorage (single storage system)
+        // Single source of truth: localStorage only
         const data = {
             decks: this.decks,
-            lastModified: new Date().toISOString()
+            lastModified: new Date().toISOString(),
+            version: "1.0.0"
         };
         localStorage.setItem('cardsBacklog', JSON.stringify(data));
         console.log('Data saved to localStorage');
-    }
-    
-    // Mark data with source origin for visual indicators
-    markDataSource(decks, source) {
-        if (!decks) return;
-        decks.forEach(deck => {
-            deck._source = source;
-            if (deck.cards) {
-                deck.cards.forEach(card => {
-                    card._source = source;
-                });
-            }
-        });
-    }
-
-    // Merge vault and localStorage data
-    mergeVaultAndLocalStorage(vaultDecks, localStorageDecks) {
-        const mergedDecks = [...vaultDecks]; // Start with vault as base
-        
-        localStorageDecks.forEach(localDeck => {
-            const existingDeckIndex = mergedDecks.findIndex(d => d.id === localDeck.id);
-            
-            if (existingDeckIndex >= 0) {
-                // Deck exists in vault, merge cards
-                const existingDeck = mergedDecks[existingDeckIndex];
-                
-                localDeck.cards?.forEach(localCard => {
-                    const existingCardIndex = existingDeck.cards?.findIndex(c => c.id === localCard.id) || -1;
-                    
-                    if (existingCardIndex >= 0) {
-                        // Card exists in vault, replace with localStorage version (modified)
-                        existingDeck.cards[existingCardIndex] = localCard;
-                    } else {
-                        // New card from localStorage
-                        if (!existingDeck.cards) existingDeck.cards = [];
-                        existingDeck.cards.push(localCard);
-                    }
-                });
-                
-                // Update deck properties if modified in localStorage
-                if (localDeck._source === 'localStorage') {
-                    mergedDecks[existingDeckIndex] = { ...existingDeck, ...localDeck, cards: existingDeck.cards };
-                }
-            } else {
-                // New deck from localStorage
-                mergedDecks.push(localDeck);
-            }
-        });
-        
-        return mergedDecks;
     }
 
     // Create backup vault.json
@@ -569,59 +518,29 @@ class IdeaDeckManager {
         document.getElementById('backupModal').classList.remove('active');
     }
 
-    // Update source indicator in detail view
-    updateSourceIndicator(card) {
-        const indicator = document.getElementById('detailSourceIndicator');
-        if (!indicator) return;
-
-        let iconClass, iconSymbol, statusText;
-
-        // Simplified - just show vault icon for all data
-        indicator.innerHTML = `
-            <i class="source-icon vault fas fa-archive"></i>
-            <span>Datos vault</span>
-        `;
-
-        // Add last modified date if available
-        if (card.updatedAt) {
-            const modifiedDate = this.formatDate(card.updatedAt);
-            indicator.innerHTML += `<span class="modified-date"> • ${modifiedDate}</span>`;
-        }
-    }
-
-    // Helper method to check if card has local modifications
-    hasLocalModifications(card) {
-        try {
-            const savedData = localStorage.getItem('cardsBacklog');
-            if (!savedData) return false;
-            
-            const localData = JSON.parse(savedData);
-            if (!localData.decks) return false;
-
-            // Look for the card in localStorage
-            for (const deck of localData.decks) {
-                if (deck.cards) {
-                    const localCard = deck.cards.find(c => c.id === card.id);
-                    if (localCard) return true;
-                }
-            }
-            return false;
-        } catch (error) {
-            return false;
-        }
-    }
-
-    // Helper method to check if card exists in vault
-    existsInVault(cardId) {
-        // This would need access to the original vault data
-        // For now, we'll use a simple heuristic based on ID patterns
-        // Vault cards typically have structured IDs like "launch-card-001"
-        return cardId.includes('-card-') || cardId.includes('launch-') || cardId.includes('vault-');
+    closeLightbox() {
+        const lightbox = document.getElementById('imageLightbox');
+        lightbox.classList.remove('active');
+        document.body.style.overflow = '';
+        this.currentLightboxCard = null;
+        this.currentLightboxIndex = -1;
     }
 
     // Detail Modal Management
-    showDetailModal(deckId, card) {
-        console.log('Setting currentDetailCard:', { deckId, card });
+    showDetailModal(deckId, cardData) {
+        console.log('Setting currentDetailCard:', { deckId, cardData });
+        
+        // Parse card data if it's a string (from HTML onclick)
+        let card = cardData;
+        if (typeof cardData === 'string') {
+            try {
+                card = JSON.parse(cardData);
+            } catch (e) {
+                console.error('Error parsing card data:', e);
+                return;
+            }
+        }
+        
         this.currentDetailCard = { deckId, card };
         const modal = document.getElementById('cardDetailModal');
         
@@ -659,8 +578,12 @@ class IdeaDeckManager {
         // Date
         document.getElementById('detailDate').textContent = this.formatDate(card.createdAt);
         
-        // Source indicator
-        this.updateSourceIndicator(card);
+        // Source indicator (simplified - single source)
+        const sourceElement = document.getElementById('detailSource');
+        if (sourceElement) {
+            sourceElement.textContent = 'Guardado';
+            sourceElement.className = 'source-indicator saved';
+        }
         
         // Description
         const descElement = document.getElementById('detailDescription');
@@ -1185,7 +1108,7 @@ class IdeaDeckManager {
         const simplifiedClass = this.isSimplifiedView ? ' simplified' : '';
         
         return `
-            <div class="card${simplifiedClass}" data-card-id="${card.id}" data-deck-id="${deckId}" onclick="app.showDetailModal('${deckId}', app.decks.find(d => d.id === '${deckId}').cards.find(c => c.id === '${card.id}'))">
+            <div class="card${simplifiedClass}" data-card-id="${card.id}" data-deck-id="${deckId}" onclick="app.showDetailModal('${deckId}', ${JSON.stringify(card).replace(/"/g, '&quot;')})">
                 <div class="card-header">
                     <div class="card-title">${card.title}</div>
                     <div class="card-actions">
