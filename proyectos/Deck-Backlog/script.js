@@ -1,14 +1,18 @@
 class IdeaDeckManager {
     constructor() {
         this.decks = [];
-        this.currentEditingDeck = null;
-        this.currentEditingCard = null;
-        this.currentDetailCard = null;
         this.allCategories = new Set();
         this.allHashtags = new Set();
+        this.currentSearchQuery = '';
+        this.currentEditingCard = null;
+        this.currentDetailCard = null;
+        this.currentLightboxCard = null;
+        this.currentLightboxIndex = -1;
+        this.vaultData = null;
+        this.containerDropHandlerAdded = false;
+        this.isSimplifiedView = false;
         this.storageMode = 'web'; // 'web' (localStorage) or 'local' (JSON)
         this.isGitHubPages = false;
-        this.vaultData = null; // Store original vault data for comparison
         
         this.init();
     }
@@ -65,44 +69,65 @@ class IdeaDeckManager {
     // Event Binding
     bindEvents() {
         // Header actions
-        document.getElementById('createDeckBtn').addEventListener('click', () => this.showDeckModal());
-        document.getElementById('dataMenuBtn').addEventListener('click', () => this.toggleDataMenu());
+        const createDeckBtn = document.getElementById('createDeckBtn');
+        const dataMenuBtn = document.getElementById('dataMenuBtn');
+        
+        if (createDeckBtn) createDeckBtn.addEventListener('click', () => this.showDeckModal());
+        if (dataMenuBtn) dataMenuBtn.addEventListener('click', () => this.toggleDataMenu());
         
         // Data menu actions
-        document.getElementById('exportBtn').addEventListener('click', () => this.exportToCSV());
-        document.getElementById('importBtn').addEventListener('click', () => this.importFromCSV());
-        document.getElementById('backupBtn').addEventListener('click', () => this.showBackupModal());
-        document.getElementById('clearDataBtn').addEventListener('click', () => this.clearData());
+        const exportBtn = document.getElementById('exportBtn');
+        const importBtn = document.getElementById('importBtn');
+        const backupBtn = document.getElementById('backupBtn');
+        const clearDataBtn = document.getElementById('clearDataBtn');
         
+        if (exportBtn) exportBtn.addEventListener('click', () => this.exportToCSV());
+        if (importBtn) importBtn.addEventListener('click', () => this.importFromCSV());
+        if (backupBtn) backupBtn.addEventListener('click', () => this.showBackupModal());
+        if (clearDataBtn) clearDataBtn.addEventListener('click', () => this.clearData());
         
-        // Local-only feature
+        // Local storage button (only visible in local environment)
         const localBtn = document.getElementById('localBtn');
         if (localBtn) {
             localBtn.addEventListener('click', () => this.generateLocalJSON());
         }
         
         // Modal events
-        document.getElementById('closeDeckModal').addEventListener('click', () => this.hideDeckModal());
-        document.getElementById('cancelDeckBtn').addEventListener('click', () => this.hideDeckModal());
-        document.getElementById('closeCardModal').addEventListener('click', () => this.hideCardModal());
-        document.getElementById('cancelCardBtn').addEventListener('click', () => this.hideCardModal());
+        const closeDeckModal = document.getElementById('closeDeckModal');
+        const cancelDeckBtn = document.getElementById('cancelDeckBtn');
+        const closeCardModal = document.getElementById('closeCardModal');
+        const cancelCardBtn = document.getElementById('cancelCardBtn');
+        
+        if (closeDeckModal) closeDeckModal.addEventListener('click', () => this.hideDeckModal());
+        if (cancelDeckBtn) cancelDeckBtn.addEventListener('click', () => this.hideDeckModal());
+        if (closeCardModal) closeCardModal.addEventListener('click', () => this.hideCardModal());
+        if (cancelCardBtn) cancelCardBtn.addEventListener('click', () => this.hideCardModal());
         
         // Form submissions
-        document.getElementById('deckForm').addEventListener('submit', (e) => this.handleDeckSubmit(e));
-        document.getElementById('cardForm').addEventListener('submit', (e) => this.handleCardSubmit(e));
+        const deckForm = document.getElementById('deckForm');
+        const cardForm = document.getElementById('cardForm');
+        
+        if (deckForm) deckForm.addEventListener('submit', (e) => this.handleDeckSubmit(e));
+        if (cardForm) cardForm.addEventListener('submit', (e) => this.handleCardSubmit(e));
         
         // Search and filters
-        document.getElementById('searchInput').addEventListener('input', (e) => this.handleSearch(e.target.value));
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) searchInput.addEventListener('input', (e) => this.handleSearch(e.target.value));
         
         // File input for import
-        document.getElementById('fileInput').addEventListener('change', (e) => this.handleFileImport(e));
+        const fileInput = document.getElementById('fileInput');
+        if (fileInput) fileInput.addEventListener('change', (e) => this.handleFileImport(e));
         
         // Detail modal events
-        document.getElementById('closeDetailModal').addEventListener('click', () => this.hideDetailModal());
+        const closeDetailModal = document.getElementById('closeDetailModal');
+        if (closeDetailModal) closeDetailModal.addEventListener('click', () => this.hideDetailModal());
         
         // Backup modal events
-        document.getElementById('closeBackupModal').addEventListener('click', () => this.hideBackupModal());
-        document.getElementById('confirmBackupBtn').addEventListener('click', () => this.hideBackupModal());
+        const closeBackupModal = document.getElementById('closeBackupModal');
+        const confirmBackupBtn = document.getElementById('confirmBackupBtn');
+        
+        if (closeBackupModal) closeBackupModal.addEventListener('click', () => this.hideBackupModal());
+        if (confirmBackupBtn) confirmBackupBtn.addEventListener('click', () => this.hideBackupModal());
         
         // Detail modal button events - using class selector like deck buttons
         document.addEventListener('click', (e) => {
@@ -493,14 +518,24 @@ class IdeaDeckManager {
     }
 
     moveCard(cardId, fromDeckId, toDeckId) {
+        console.log('Moving card:', cardId, 'from', fromDeckId, 'to', toDeckId);
+        
         const fromDeck = this.decks.find(d => d.id === fromDeckId);
         const toDeck = this.decks.find(d => d.id === toDeckId);
         
+        console.log('From deck:', fromDeck?.name, 'To deck:', toDeck?.name);
+        
         if (fromDeck && toDeck && fromDeckId !== toDeckId) {
             const cardIndex = fromDeck.cards.findIndex(c => c.id === cardId);
+            console.log('Card index in source deck:', cardIndex);
+            
             if (cardIndex !== -1) {
                 const card = fromDeck.cards.splice(cardIndex, 1)[0];
+                console.log('Moved card:', card.title);
+                
                 toDeck.cards.push(card);
+                console.log('Target deck now has', toDeck.cards.length, 'cards');
+                
                 this.saveData();
                 this.render();
             }
@@ -706,31 +741,11 @@ class IdeaDeckManager {
     }
 
     editFromDetail() {
-        console.log('Edit from detail clicked, currentDetailCard:', this.currentDetailCard);
-        console.log('Available decks:', this.decks.map(d => ({id: d.id, name: d.name})));
-        
         if (this.currentDetailCard && this.currentDetailCard.card) {
             this.hideDetailModal();
-            // Find the actual card object from the deck
-            const deck = this.decks.find(d => d.id === this.currentDetailCard.deckId);
-            console.log('Found deck:', deck);
-            
-            if (deck && deck.cards) {
-                const card = deck.cards.find(c => c.id === this.currentDetailCard.card.id);
-                console.log('Found card:', card);
-                
-                if (card) {
-                    setTimeout(() => {
-                        this.showCardModal(this.currentDetailCard.deckId, card);
-                    }, 100);
-                } else {
-                    console.error('Card not found in deck. Available cards:', deck.cards.map(c => c.id));
-                }
-            } else {
-                console.error('Deck not found or has no cards');
-            }
-        } else {
-            console.error('No currentDetailCard found for editing');
+            setTimeout(() => {
+                this.showCardModal(this.currentDetailCard.deckId, this.currentDetailCard.card);
+            }, 300);
         }
     }
 
@@ -801,6 +816,25 @@ class IdeaDeckManager {
             if (card) return card;
         }
         return null;
+    }
+
+    // Toggle simplified view mode
+    toggleViewMode() {
+        this.isSimplifiedView = !this.isSimplifiedView;
+        const btn = document.getElementById('viewModeBtn');
+        const icon = btn.querySelector('i');
+        
+        if (this.isSimplifiedView) {
+            icon.className = 'fas fa-th-large';
+            btn.title = 'Vista completa';
+            document.body.classList.add('simplified-view');
+        } else {
+            icon.className = 'fas fa-list';
+            btn.title = 'Vista simplificada';
+            document.body.classList.remove('simplified-view');
+        }
+        
+        this.render();
     }
 
     // Mouse Parallax Effects for Card Detail (Ana Cards style)
@@ -1071,7 +1105,8 @@ class IdeaDeckManager {
         
         const deckDiv = document.createElement('div');
         deckDiv.className = `deck ${deck.layout === 'horizontal' ? 'deck-horizontal' : 'deck-column'}`;
-        deckDiv.draggable = deck.name !== 'Ideas Generales'; // Ideas Generales can't be moved
+        // Ideas Generales deck is not draggable but can receive cards
+        deckDiv.draggable = deck.name !== 'Ideas Generales';
         deckDiv.dataset.deckId = deck.id;
         deckDiv.innerHTML = `
             <div class="deck-header">
@@ -1147,11 +1182,16 @@ class IdeaDeckManager {
             imagesHTML += '</div>';
         }
         
+        const simplifiedClass = this.isSimplifiedView ? ' simplified' : '';
+        
         return `
-            <div class="card" draggable="true" data-card-id="${card.id}" data-deck-id="${deckId}" onclick="app.showDetailModal('${deckId}', app.decks.find(d => d.id === '${deckId}').cards.find(c => c.id === '${card.id}'))">
+            <div class="card${simplifiedClass}" data-card-id="${card.id}" data-deck-id="${deckId}" onclick="app.showDetailModal('${deckId}', app.decks.find(d => d.id === '${deckId}').cards.find(c => c.id === '${card.id}'))">
                 <div class="card-header">
                     <div class="card-title">${card.title}</div>
                     <div class="card-actions">
+                        <div class="drag-handle" draggable="true" title="Arrastrar para mover">
+                            <i class="fas fa-grip-vertical"></i>
+                        </div>
                         <button class="card-action-btn" onclick="event.stopPropagation(); app.showCardModal('${deckId}', app.decks.find(d => d.id === '${deckId}').cards.find(c => c.id === '${card.id}'))" title="Editar">
                             <i class="fas fa-edit"></i>
                         </button>
@@ -1163,70 +1203,72 @@ class IdeaDeckManager {
                 ${categoryHTML}
                 <div class="card-description">${card.description || ''}</div>
                 ${hashtagsHTML}
-                ${imagesHTML}
+                <div class="card-images-section">${imagesHTML}</div>
             </div>
         `;
     }
 
-    // Drag and Drop for Cards
+    // Drag and Drop for Cards - With Drag Handle
     addDragAndDropToCards(deckElement, deckId) {
-        const cards = deckElement.querySelectorAll('.card');
+        const dragHandles = deckElement.querySelectorAll('.drag-handle');
         const cardsGrid = deckElement.querySelector('.cards-grid');
         
-        cards.forEach(card => {
-            card.addEventListener('dragstart', (e) => {
+        dragHandles.forEach(handle => {
+            const card = handle.closest('.card');
+            
+            handle.addEventListener('dragstart', (e) => {
+                e.stopPropagation();
+                const cardId = card.dataset.cardId;
+                const fromDeckId = card.dataset.deckId;
+                
+                console.log('Drag started - cardId:', cardId, 'fromDeckId:', fromDeckId);
+                
                 e.dataTransfer.setData('text/plain', JSON.stringify({
-                    cardId: card.dataset.cardId,
-                    fromDeckId: card.dataset.deckId
+                    cardId: cardId,
+                    fromDeckId: fromDeckId
                 }));
                 card.classList.add('dragging');
+                document.body.classList.add('dragging-card');
             });
             
-            card.addEventListener('dragend', () => {
+            handle.addEventListener('dragend', () => {
+                const card = handle.closest('.card');
                 card.classList.remove('dragging');
-            });
-
-            // Card reordering within same deck
-            card.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                const draggingCard = deckElement.querySelector('.dragging');
-                if (draggingCard && draggingCard !== card) {
-                    const rect = card.getBoundingClientRect();
-                    const midY = rect.top + rect.height / 2;
-                    if (e.clientY < midY) {
-                        card.parentNode.insertBefore(draggingCard, card);
-                    } else {
-                        card.parentNode.insertBefore(draggingCard, card.nextSibling);
-                    }
-                }
+                document.body.classList.remove('dragging-card');
+                document.querySelectorAll('.deck').forEach(d => d.classList.remove('drop-zone-active'));
             });
         });
         
+        // Simple deck drop zone
         cardsGrid.addEventListener('dragover', (e) => {
             e.preventDefault();
-            deckElement.classList.add('drag-over');
+            const draggingCard = document.querySelector('.dragging');
+            if (draggingCard) {
+                deckElement.classList.add('drop-zone-active');
+            }
         });
         
         cardsGrid.addEventListener('dragleave', (e) => {
-            if (!deckElement.contains(e.relatedTarget)) {
-                deckElement.classList.remove('drag-over');
+            const rect = cardsGrid.getBoundingClientRect();
+            if (e.clientX < rect.left || e.clientX > rect.right || 
+                e.clientY < rect.top || e.clientY > rect.bottom) {
+                deckElement.classList.remove('drop-zone-active');
             }
         });
         
         cardsGrid.addEventListener('drop', (e) => {
             e.preventDefault();
-            deckElement.classList.remove('drag-over');
+            deckElement.classList.remove('drop-zone-active');
             
             try {
                 const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-                const draggingCard = deckElement.querySelector('.dragging');
                 
-                if (data.fromDeckId === deckId && draggingCard) {
-                    // Reorder within same deck
-                    this.reorderCardsInDeck(deckId, draggingCard);
-                } else {
-                    // Move between decks
+                if (data.fromDeckId !== deckId) {
+                    // Simple move between decks - add to end
                     this.moveCard(data.cardId, data.fromDeckId, deckId);
+                } else {
+                    // Reorder within same deck
+                    this.reorderCardsInDeck(deckId);
                 }
             } catch (error) {
                 console.error('Error moving card:', error);
@@ -1234,29 +1276,101 @@ class IdeaDeckManager {
         });
     }
 
+    // Helper function to get the element after which to insert the dragged item
+    getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.card:not(.dragging)')];
+        
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    // Get drop position for cards moved between decks
+    getDropPosition(e, cardsGrid) {
+        const cardElements = [...cardsGrid.querySelectorAll('.card')];
+        let position = cardElements.length; // Default to end
+        
+        for (let i = 0; i < cardElements.length; i++) {
+            const rect = cardElements[i].getBoundingClientRect();
+            if (e.clientY < rect.top + rect.height / 2) {
+                position = i;
+                break;
+            }
+        }
+        
+        return position;
+    }
+
+    // Move card to specific position in target deck
+    moveCardToPosition(cardId, fromDeckId, toDeckId, position) {
+        const fromDeck = this.decks.find(d => d.id === fromDeckId);
+        const toDeck = this.decks.find(d => d.id === toDeckId);
+        
+        if (fromDeck && toDeck && fromDeckId !== toDeckId) {
+            const cardIndex = fromDeck.cards.findIndex(c => c.id === cardId);
+            if (cardIndex !== -1) {
+                const card = fromDeck.cards.splice(cardIndex, 1)[0];
+                
+                // Add order property to card
+                card.order = position;
+                
+                // Insert at specific position
+                if (position >= toDeck.cards.length) {
+                    toDeck.cards.push(card);
+                } else {
+                    toDeck.cards.splice(position, 0, card);
+                }
+                
+                // Update order indices for all cards in target deck
+                toDeck.cards.forEach((c, index) => {
+                    c.order = index;
+                });
+                
+                this.saveData();
+                this.render();
+            }
+        }
+    }
+
     // Reorder cards within the same deck based on DOM position
-    reorderCardsInDeck(deckId, draggedCard) {
+    reorderCardsInDeck(deckId) {
+        console.log('Reordering cards in deck:', deckId);
         const deck = this.decks.find(d => d.id === deckId);
         if (!deck) return;
 
-        const cardsGrid = draggedCard.closest('.cards-grid');
+        const deckElement = document.querySelector(`[data-deck-id="${deckId}"]`);
+        if (!deckElement) return;
+        
+        const cardsGrid = deckElement.querySelector('.cards-grid');
+        if (!cardsGrid) return;
+        
         const cardElements = Array.from(cardsGrid.querySelectorAll('.card'));
         const newOrder = [];
 
-        cardElements.forEach(cardEl => {
+        cardElements.forEach((cardEl, index) => {
             const cardId = cardEl.dataset.cardId;
             const card = deck.cards.find(c => c.id === cardId);
             if (card) {
+                card.order = index;
                 newOrder.push(card);
             }
         });
 
         deck.cards = newOrder;
         this.saveData();
+        console.log('Reordered', newOrder.length, 'cards');
     }
 
     // Drag and Drop for Decks
     addDragAndDropToDecks(deckElement, deckId) {
+        // Only add deck dragging events if the deck is draggable
         if (deckElement.draggable) {
             deckElement.addEventListener('dragstart', (e) => {
                 e.dataTransfer.setData('text/plain', JSON.stringify({
@@ -1287,23 +1401,27 @@ class IdeaDeckManager {
             });
         }
 
-        // Container drop handling
-        const container = document.getElementById('decksContainer');
-        container.addEventListener('drop', (e) => {
-            e.preventDefault();
-            try {
-                const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-                if (data.type === 'deck') {
-                    this.reorderDecks();
+        // Container drop handling - only add once
+        if (!this.containerDropHandlerAdded) {
+            const container = document.getElementById('decksContainer');
+            container.addEventListener('drop', (e) => {
+                e.preventDefault();
+                try {
+                    const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                    if (data.type === 'deck') {
+                        this.reorderDecks();
+                    }
+                } catch (error) {
+                    console.error('Error reordering decks:', error);
                 }
-            } catch (error) {
-                console.error('Error reordering decks:', error);
-            }
-        });
+            });
 
-        container.addEventListener('dragover', (e) => {
-            e.preventDefault();
-        });
+            container.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+            
+            this.containerDropHandlerAdded = true;
+        }
     }
 
     // Reorder decks based on DOM position
