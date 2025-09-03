@@ -5,6 +5,8 @@ class IdeaDeckManager {
         this.currentEditingCard = null;
         this.allCategories = new Set();
         this.allHashtags = new Set();
+        this.storageMode = 'web'; // 'web' (localStorage) or 'local' (JSON)
+        this.isGitHubPages = false;
         
         this.init();
     }
@@ -23,10 +25,44 @@ class IdeaDeckManager {
                       window.location.hostname === 'localhost' || 
                       window.location.hostname === '127.0.0.1';
         
+        this.isGitHubPages = window.location.hostname === 'vandalit.github.io';
+        
+        // Set storage mode based on environment
+        if (this.isGitHubPages) {
+            this.storageMode = 'web';
+        } else if (this.isLocal) {
+            this.storageMode = 'local';
+        } else {
+            this.storageMode = 'web';
+        }
+        
+        // Update UI based on environment
+        this.updateStorageUI();
+        
         // Show/hide local-only features
         const localBtn = document.getElementById('localBtn');
         if (localBtn) {
             localBtn.style.display = this.isLocal ? 'flex' : 'none';
+        }
+    }
+    
+    updateStorageUI() {
+        const storageChip = document.getElementById('storageChip');
+        const storageToggle = document.getElementById('storageToggle');
+        
+        if (storageChip) {
+            if (this.isGitHubPages) {
+                storageChip.textContent = 'Web';
+                storageChip.className = 'storage-chip web';
+            } else if (this.isLocal) {
+                storageChip.textContent = 'Local';
+                storageChip.className = 'storage-chip local';
+            }
+        }
+        
+        if (storageToggle) {
+            storageToggle.checked = this.storageMode === 'local';
+            storageToggle.disabled = this.isGitHubPages;
         }
     }
 
@@ -40,6 +76,12 @@ class IdeaDeckManager {
         document.getElementById('exportBtn').addEventListener('click', () => this.exportToCSV());
         document.getElementById('importBtn').addEventListener('click', () => this.importFromCSV());
         document.getElementById('clearDataBtn').addEventListener('click', () => this.clearData());
+        
+        // Storage toggle
+        const storageToggle = document.getElementById('storageToggle');
+        if (storageToggle) {
+            storageToggle.addEventListener('change', (e) => this.handleStorageToggle(e));
+        }
         
         // Local-only feature
         const localBtn = document.getElementById('localBtn');
@@ -88,47 +130,100 @@ class IdeaDeckManager {
 
     // Data Management
     async loadData() {
-        // Try to load from localStorage first
-        const savedData = localStorage.getItem('cardsBacklog');
-        if (savedData) {
-            try {
-                const data = JSON.parse(savedData);
-                this.decks = data.decks || [];
-                this.updateCategoriesAndHashtags();
-                return;
-            } catch (error) {
-                console.error('Error loading localStorage data:', error);
+        if (this.storageMode === 'web') {
+            // GitHub Pages or web mode - use localStorage only
+            const savedData = localStorage.getItem('cardsBacklog');
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    this.decks = data.decks || [];
+                    this.updateCategoriesAndHashtags();
+                    return;
+                } catch (error) {
+                    console.error('Error loading localStorage data:', error);
+                }
             }
-        }
-        
-        // If no localStorage data and running locally, try to load from data.json
-        if (this.isLocal) {
+        } else if (this.storageMode === 'local') {
+            // Local mode - use JSON only
             try {
                 const response = await fetch('./data.json');
                 if (response.ok) {
                     const data = await response.json();
                     this.decks = data.decks || [];
                     this.updateCategoriesAndHashtags();
-                    // Save to localStorage for future use
-                    this.saveData();
                     return;
                 }
             } catch (error) {
                 console.log('No data.json found or error loading it:', error);
             }
         }
-        
+
         // Default empty state
         this.decks = [];
         this.createDefaultDeck();
     }
 
     saveData() {
+        if (this.storageMode === 'web') {
+            // Save to localStorage
+            const data = {
+                decks: this.decks,
+                lastModified: new Date().toISOString()
+            };
+            localStorage.setItem('cardsBacklog', JSON.stringify(data));
+        } else if (this.storageMode === 'local') {
+            // Save to JSON file (download)
+            this.saveToJSON();
+        }
+    }
+    
+    saveToJSON() {
         const data = {
             decks: this.decks,
-            lastModified: new Date().toISOString()
+            lastModified: new Date().toISOString(),
+            version: "1.0.0"
         };
-        localStorage.setItem('cardsBacklog', JSON.stringify(data));
+
+        const jsonString = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'data.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        alert('Archivo data.json actualizado. Reemplaza el archivo en la raíz del proyecto.');
+    }
+    
+    // Handle storage mode toggle
+    handleStorageToggle(e) {
+        if (this.isGitHubPages) {
+            // Prevent toggle on GitHub Pages and show warning
+            e.preventDefault();
+            e.target.checked = false;
+            alert(`⚠️ Modo Local no disponible en GitHub Pages\n\n` +
+                  `Los datos se almacenan temporalmente en localStorage del navegador.\n` +
+                  `Para no perder tus datos:\n` +
+                  `• Exporta regularmente a CSV\n` +
+                  `• Descarga el repositorio para uso local\n\n` +
+                  `Repositorio: https://github.com/vandalit/Deck-Backlog`);
+            return;
+        }
+        
+        // This shouldn't happen in current implementation but kept for safety
+        const newMode = e.target.checked ? 'local' : 'web';
+        this.storageMode = newMode;
+        this.updateStorageUI();
+        
+        // Reload data with new storage mode
+        this.loadData().then(() => {
+            this.render();
+            this.updateFilters();
+        });
     }
 
     createDefaultDeck() {
@@ -989,32 +1084,9 @@ class IdeaDeckManager {
         }
     }
 
-    // Generate static JSON file for local development
+    // Generate static JSON file for local development (legacy - now handled by saveToJSON)
     generateLocalJSON() {
-        if (!this.isLocal) {
-            alert('Esta función solo está disponible en entorno local.');
-            return;
-        }
-
-        const data = {
-            decks: this.decks,
-            lastModified: new Date().toISOString(),
-            version: "1.0.0"
-        };
-
-        const jsonString = JSON.stringify(data, null, 2);
-        const blob = new Blob([jsonString], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'data.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        alert('Archivo data.json generado. Colócalo en la raíz del proyecto para datos iniciales.');
+        this.saveToJSON();
     }
 }
 

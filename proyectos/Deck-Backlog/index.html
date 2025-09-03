@@ -20,6 +20,7 @@
                     <div class="dropdown">
                         <button class="btn btn-secondary dropdown-toggle" id="dataMenuBtn">
                             <i class="fas fa-database"></i> Datos
+                            <span class="storage-chip" id="storageChip">Web</span>
                         </button>
                         <div class="data-menu-content">
                             <button id="exportBtn" class="data-btn">
@@ -30,10 +31,16 @@
                                 <i class="fas fa-upload"></i>
                                 Importar CSV
                             </button>
-                            <button id="localBtn" class="data-btn local-only" style="display: none;">
-                                <i class="fas fa-code"></i>
-                                Generar JSON Local
-                            </button>
+                            <div class="storage-toggle-section">
+                                <label class="storage-toggle">
+                                    <input type="checkbox" id="storageToggle">
+                                    <span class="toggle-slider"></span>
+                                    <span class="toggle-labels">
+                                        <span class="label-web">Web</span>
+                                        <span class="label-local">Local</span>
+                                    </span>
+                                </label>
+                            </div>
                             <button id="clearDataBtn" class="data-btn danger">
                                 <i class="fas fa-trash"></i>
                                 Limpiar Datos

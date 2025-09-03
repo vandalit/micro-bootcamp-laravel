@@ -21,6 +21,8 @@ export default class ProductList {
     this.productState.changePage$.next(page);
   }
 
-  addToCart(product: Product) {}
-  // this.cartState.addToCart(product);
-}
+  addToCart(product: Product) {
+    this.cartState.add({
+      product, quantity: 1,
+    });
+}}
