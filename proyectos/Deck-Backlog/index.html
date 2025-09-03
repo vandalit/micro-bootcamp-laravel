@@ -266,6 +266,21 @@
     <!-- File Input for Import -->
     <input type="file" id="fileInput" accept=".csv" style="display: none;">
 
+    <!-- Image Lightbox Modal -->
+    <div id="imageLightbox" class="lightbox-modal">
+        <div class="lightbox-content">
+            <button class="lightbox-close" onclick="app.closeLightbox()">&times;</button>
+            <img id="lightboxImage" src="" alt="">
+            <div class="lightbox-nav">
+                <button id="lightboxPrev" onclick="app.prevLightboxImage()">&lt;</button>
+                <button id="lightboxNext" onclick="app.nextLightboxImage()">&gt;</button>
+            </div>
+            <div class="lightbox-counter">
+                <span id="lightboxCounter">1 / 1</span>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>

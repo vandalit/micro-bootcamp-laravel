@@ -541,37 +541,10 @@ class IdeaDeckManager {
 
         let iconClass, iconSymbol, statusText;
 
-        // Determine card source and modification status
-        if (!card._source || card._source === 'vault') {
-            // Original vault data, check if it has been modified
-            const hasLocalModifications = this.hasLocalModifications(card);
-            if (hasLocalModifications) {
-                iconClass = 'modified';
-                iconSymbol = 'fas fa-globe';
-                statusText = 'Modificado localmente';
-            } else {
-                iconClass = 'vault';
-                iconSymbol = 'fas fa-archive';
-                statusText = 'Datos originales';
-            }
-        } else if (card._source === 'localStorage') {
-            // Check if this is a completely new card or modified existing one
-            const existsInVault = this.existsInVault(card.id);
-            if (existsInVault) {
-                iconClass = 'modified';
-                iconSymbol = 'fas fa-globe';
-                statusText = 'Modificado localmente';
-            } else {
-                iconClass = 'new';
-                iconSymbol = 'fas fa-feather-alt';
-                statusText = 'Creado localmente';
-            }
-        }
-
-        // Update the indicator
+        // Simplified - just show vault icon for all data
         indicator.innerHTML = `
-            <i class="source-icon ${iconClass} ${iconSymbol}"></i>
-            <span>${statusText}</span>
+            <i class="source-icon vault fas fa-archive"></i>
+            <span>Datos vault</span>
         `;
 
         // Add last modified date if available
@@ -712,10 +685,13 @@ class IdeaDeckManager {
             imagesHTML += `
                 <div class="detail-image-section">
                     <label class="detail-image-label">Galería (${card.galleryImages.length}):</label>
-                    <div class="detail-gallery-images">
-                        ${card.galleryImages.map(img => 
-                            `<img src="${img}" alt="Gallery image" class="detail-gallery-thumb" onerror="this.style.display='none'">`
-                        ).join('')}
+                    <div class="card-gallery">
+                        ${card.galleryImages && card.galleryImages.length > 0 ? 
+                            card.galleryImages.slice(0, 3).map((img, index) => 
+                                `<img src="${img}" alt="Gallery image" class="gallery-thumb" onclick="app.openLightbox('${card.id}', ${index})">`
+                            ).join('') + 
+                            (card.galleryImages.length > 3 ? `<div class="gallery-more" onclick="app.openLightbox('${card.id}', 3)">+${card.galleryImages.length - 3}</div>` : '')
+                        : ''}
                     </div>
                 </div>
             `;
@@ -763,6 +739,68 @@ class IdeaDeckManager {
             this.hideDetailModal();
             this.deleteCard(this.currentDetailCard.deckId, this.currentDetailCard.card.id);
         }
+    }
+
+    // Toggle deck layout between horizontal and column
+    toggleDeckLayout(deckId) {
+        const deck = this.decks.find(d => d.id === deckId);
+        if (deck) {
+            deck.layout = deck.layout === 'horizontal' ? 'column' : 'horizontal';
+            this.saveData();
+            this.render();
+        }
+    }
+
+    // Lightbox functionality for gallery images
+    openLightbox(cardId, imageIndex) {
+        const card = this.findCardById(cardId);
+        if (!card || !card.galleryImages || card.galleryImages.length === 0) return;
+
+        this.currentLightboxCard = card;
+        this.currentLightboxIndex = imageIndex;
+
+        const lightbox = document.getElementById('imageLightbox');
+        const lightboxImage = document.getElementById('lightboxImage');
+        const counter = document.getElementById('lightboxCounter');
+        const prevBtn = document.getElementById('lightboxPrev');
+        const nextBtn = document.getElementById('lightboxNext');
+
+        lightboxImage.src = card.galleryImages[imageIndex];
+        counter.textContent = `${imageIndex + 1} / ${card.galleryImages.length}`;
+
+        prevBtn.disabled = imageIndex === 0;
+        nextBtn.disabled = imageIndex === card.galleryImages.length - 1;
+
+        lightbox.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    closeLightbox() {
+        const lightbox = document.getElementById('imageLightbox');
+        lightbox.classList.remove('active');
+        document.body.style.overflow = '';
+        this.currentLightboxCard = null;
+        this.currentLightboxIndex = -1;
+    }
+
+    prevLightboxImage() {
+        if (this.currentLightboxCard && this.currentLightboxIndex > 0) {
+            this.openLightbox(this.currentLightboxCard.id, this.currentLightboxIndex - 1);
+        }
+    }
+
+    nextLightboxImage() {
+        if (this.currentLightboxCard && this.currentLightboxIndex < this.currentLightboxCard.galleryImages.length - 1) {
+            this.openLightbox(this.currentLightboxCard.id, this.currentLightboxIndex + 1);
+        }
+    }
+
+    findCardById(cardId) {
+        for (const deck of this.decks) {
+            const card = deck.cards.find(c => c.id === cardId);
+            if (card) return card;
+        }
+        return null;
     }
 
     // Mouse Parallax Effects for Card Detail (Ana Cards style)
@@ -994,7 +1032,24 @@ class IdeaDeckManager {
             return;
         }
         
-        this.decks.forEach(deck => {
+        // Sort decks: Ideas Generales first, then by order, then by creation date
+        const sortedDecks = [...this.decks].sort((a, b) => {
+            // Ideas Generales always first
+            if (a.name === 'Ideas Generales') return -1;
+            if (b.name === 'Ideas Generales') return 1;
+            
+            // Then by order if specified
+            if (a.order !== undefined && b.order !== undefined) {
+                return a.order - b.order;
+            }
+            if (a.order !== undefined) return -1;
+            if (b.order !== undefined) return 1;
+            
+            // Finally by creation date
+            return new Date(a.createdAt) - new Date(b.createdAt);
+        });
+
+        sortedDecks.forEach(deck => {
             const deckElement = this.createDeckElement(deck);
             container.appendChild(deckElement);
         });
@@ -1015,7 +1070,9 @@ class IdeaDeckManager {
         const filteredCards = this.filterCards(deck.cards);
         
         const deckDiv = document.createElement('div');
-        deckDiv.className = 'deck';
+        deckDiv.className = `deck ${deck.layout === 'horizontal' ? 'deck-horizontal' : 'deck-column'}`;
+        deckDiv.draggable = deck.name !== 'Ideas Generales'; // Ideas Generales can't be moved
+        deckDiv.dataset.deckId = deck.id;
         deckDiv.innerHTML = `
             <div class="deck-header">
                 <div>
@@ -1023,6 +1080,9 @@ class IdeaDeckManager {
                     <div class="deck-description">${deck.description || ''}</div>
                 </div>
                 <div class="deck-actions">
+                    <button class="deck-action-btn" onclick="app.toggleDeckLayout('${deck.id}')" title="Cambiar layout">
+                        <i class="fas ${deck.layout === 'horizontal' ? 'fa-grip-lines' : 'fa-grip-vertical'}"></i>
+                    </button>
                     <button class="deck-action-btn" onclick="app.showDeckModal(app.decks.find(d => d.id === '${deck.id}'))" title="Editar deck">
                         <i class="fas fa-edit"></i>
                     </button>
@@ -1046,6 +1106,7 @@ class IdeaDeckManager {
         
         // Add drag and drop functionality
         this.addDragAndDropToCards(deckDiv, deck.id);
+        this.addDragAndDropToDecks(deckDiv, deck.id);
         
         return deckDiv;
     }
@@ -1073,12 +1134,12 @@ class IdeaDeckManager {
                 const remainingCount = card.galleryImages.length - 3;
                 
                 imagesHTML += '<div class="card-gallery-images">';
-                visibleImages.forEach(img => {
-                    imagesHTML += `<img src="${img}" alt="Gallery image" class="gallery-thumb" onerror="this.style.display='none'">`;
+                visibleImages.forEach((img, index) => {
+                    imagesHTML += `<img src="${img}" alt="Gallery image" class="gallery-thumb" onclick="app.openLightbox('${card.id}', ${index})" onerror="this.style.display='none'">`;
                 });
                 
                 if (remainingCount > 0) {
-                    imagesHTML += `<div class="gallery-more">+${remainingCount}</div>`;
+                    imagesHTML += `<div class="gallery-more" onclick="app.openLightbox('${card.id}', 3)">+${remainingCount}</div>`;
                 }
                 imagesHTML += '</div>';
             }
@@ -1107,7 +1168,7 @@ class IdeaDeckManager {
         `;
     }
 
-    // Drag and Drop
+    // Drag and Drop for Cards
     addDragAndDropToCards(deckElement, deckId) {
         const cards = deckElement.querySelectorAll('.card');
         const cardsGrid = deckElement.querySelector('.cards-grid');
@@ -1123,6 +1184,21 @@ class IdeaDeckManager {
             
             card.addEventListener('dragend', () => {
                 card.classList.remove('dragging');
+            });
+
+            // Card reordering within same deck
+            card.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                const draggingCard = deckElement.querySelector('.dragging');
+                if (draggingCard && draggingCard !== card) {
+                    const rect = card.getBoundingClientRect();
+                    const midY = rect.top + rect.height / 2;
+                    if (e.clientY < midY) {
+                        card.parentNode.insertBefore(draggingCard, card);
+                    } else {
+                        card.parentNode.insertBefore(draggingCard, card.nextSibling);
+                    }
+                }
             });
         });
         
@@ -1143,11 +1219,113 @@ class IdeaDeckManager {
             
             try {
                 const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-                this.moveCard(data.cardId, data.fromDeckId, deckId);
+                const draggingCard = deckElement.querySelector('.dragging');
+                
+                if (data.fromDeckId === deckId && draggingCard) {
+                    // Reorder within same deck
+                    this.reorderCardsInDeck(deckId, draggingCard);
+                } else {
+                    // Move between decks
+                    this.moveCard(data.cardId, data.fromDeckId, deckId);
+                }
             } catch (error) {
                 console.error('Error moving card:', error);
             }
         });
+    }
+
+    // Reorder cards within the same deck based on DOM position
+    reorderCardsInDeck(deckId, draggedCard) {
+        const deck = this.decks.find(d => d.id === deckId);
+        if (!deck) return;
+
+        const cardsGrid = draggedCard.closest('.cards-grid');
+        const cardElements = Array.from(cardsGrid.querySelectorAll('.card'));
+        const newOrder = [];
+
+        cardElements.forEach(cardEl => {
+            const cardId = cardEl.dataset.cardId;
+            const card = deck.cards.find(c => c.id === cardId);
+            if (card) {
+                newOrder.push(card);
+            }
+        });
+
+        deck.cards = newOrder;
+        this.saveData();
+    }
+
+    // Drag and Drop for Decks
+    addDragAndDropToDecks(deckElement, deckId) {
+        if (deckElement.draggable) {
+            deckElement.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', JSON.stringify({
+                    deckId: deckId,
+                    type: 'deck'
+                }));
+                deckElement.classList.add('deck-dragging');
+            });
+
+            deckElement.addEventListener('dragend', () => {
+                deckElement.classList.remove('deck-dragging');
+            });
+
+            deckElement.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                const draggingDeck = document.querySelector('.deck-dragging');
+                if (draggingDeck && draggingDeck !== deckElement) {
+                    const rect = deckElement.getBoundingClientRect();
+                    const midY = rect.top + rect.height / 2;
+                    const container = deckElement.parentNode;
+                    
+                    if (e.clientY < midY) {
+                        container.insertBefore(draggingDeck, deckElement);
+                    } else {
+                        container.insertBefore(draggingDeck, deckElement.nextSibling);
+                    }
+                }
+            });
+        }
+
+        // Container drop handling
+        const container = document.getElementById('decksContainer');
+        container.addEventListener('drop', (e) => {
+            e.preventDefault();
+            try {
+                const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                if (data.type === 'deck') {
+                    this.reorderDecks();
+                }
+            } catch (error) {
+                console.error('Error reordering decks:', error);
+            }
+        });
+
+        container.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+    }
+
+    // Reorder decks based on DOM position
+    reorderDecks() {
+        const container = document.getElementById('decksContainer');
+        const deckElements = Array.from(container.querySelectorAll('.deck'));
+        const newOrder = [];
+
+        deckElements.forEach((deckEl, index) => {
+            const deckId = deckEl.dataset.deckId;
+            const deck = this.decks.find(d => d.id === deckId);
+            if (deck) {
+                // Update order, but keep Ideas Generales at 0
+                if (deck.name !== 'Ideas Generales') {
+                    deck.order = index + 1;
+                }
+                newOrder.push(deck);
+            }
+        });
+
+        this.decks = newOrder;
+        this.saveData();
     }
 
     // Data Export/Import

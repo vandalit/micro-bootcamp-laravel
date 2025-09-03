@@ -458,13 +458,24 @@ body {
     color: var(--text-muted);
 }
 
-/* Cards Grid within Deck */
+/* Cards Grid */
 .cards-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: var(--spacing-sm);
-    min-height: 100px;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
 }
+
+/* Deck Layout Variations */
+.deck-horizontal {
+    grid-column: 1 / -1; /* Takes full width */
+}
+
+.deck-horizontal .cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: var(--spacing-sm);
+}
+
 
 .card {
     background: var(--bg-tertiary);
@@ -828,6 +839,107 @@ form {
     padding: var(--spacing-md);
 }
 
+/* Lightbox Modal Styles */
+.lightbox-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.lightbox-modal.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.lightbox-content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.lightbox-close {
+    position: absolute;
+    top: -50px;
+    right: -20px;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    z-index: 3001;
+    padding: 10px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.lightbox-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
+}
+
+#lightboxImage {
+    max-width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: var(--radius-md);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.lightbox-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+}
+
+.lightbox-nav button {
+    background: rgba(0, 0, 0, 0.7);
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    padding: 15px 20px;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    pointer-events: all;
+}
+
+.lightbox-nav button:hover {
+    background: rgba(0, 0, 0, 0.9);
+    transform: scale(1.1);
+}
+
+.lightbox-nav button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.lightbox-counter {
+    position: absolute;
+    bottom: -40px;
+    color: white;
+    font-size: 0.9rem;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+}
+
 .detail-card-container {
     position: relative;
     width: 100%;
@@ -1177,6 +1289,31 @@ form {
     transform: scale(1.05);
     border-color: var(--accent-lime);
     box-shadow: 0 4px 15px rgba(164, 255, 53, 0.3);
+}
+
+/* Drag and Drop Styles */
+.card.dragging {
+    opacity: 0.5;
+    transform: rotate(5deg);
+}
+
+.deck.drag-over {
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+}
+
+.deck.deck-dragging {
+    opacity: 0.7;
+    transform: scale(0.95) rotate(2deg);
+    z-index: 1000;
+}
+
+.deck[draggable="true"] {
+    cursor: move;
+}
+
+.deck[draggable="false"] {
+    cursor: default;
 }
 
 /* Empty States */

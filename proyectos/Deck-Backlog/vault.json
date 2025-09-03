@@ -66,11 +66,11 @@
     {
       "id": "ideas-generales-default",
       "name": "Ideas Generales",
-      "description": "Deck principal para ideas y proyectos",
-      "layout": "landscape",
+      "description": "Deck principal para ideas generales y conceptos iniciales",
+      "createdAt": "2024-01-01T00:00:00.000Z",
       "order": 0,
-      "cards": [],
-      "createdAt": "2025-09-03T17:27:00.000Z"
+      "layout": "horizontal",
+      "cards": []
     }
   ],
   "lastModified": "2025-09-03T17:32:00.000Z",
