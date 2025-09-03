@@ -1,3 +1,11 @@
+/*
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                                          🎯 IDEA DECK MANAGER                                                   ║
+║                                  Sistema de gestión de ideas y proyectos                                        ║
+║                                        con diseño Bento moderno                                                  ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+*/
+
 class IdeaDeckManager {
     constructor() {
         this.decks = [];
@@ -7,10 +15,20 @@ class IdeaDeckManager {
         this.allHashtags = new Set();
         this.storageMode = 'web'; // 'web' (localStorage) or 'local' (JSON)
         this.isGitHubPages = false;
+<<<<<<< HEAD
+=======
+        this.vaultData = null; // Store original vault data for comparison
+>>>>>>> 0abb2eb (checkpoint)
         
         this.init();
     }
 
+    /*
+    ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+    ║                                        🚀 INITIALIZATION                                                      ║
+    ║                                    Sistema de inicialización                                                  ║
+    ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+    */
     async init() {
         this.detectEnvironment();
         await this.loadData();
@@ -60,6 +78,12 @@ class IdeaDeckManager {
         }
     }
 
+    /*
+    ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+    ║                                        🎮 EVENT BINDING                                                       ║
+    ║                                   Gestión de eventos del DOM                                                  ║
+    ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+    */
     // Event Binding
     bindEvents() {
         // Header actions
@@ -102,6 +126,7 @@ class IdeaDeckManager {
         document.getElementById('closeBackupModal').addEventListener('click', () => this.hideBackupModal());
         document.getElementById('confirmBackupBtn').addEventListener('click', () => this.hideBackupModal());
         
+<<<<<<< HEAD
         // Debug all clicks to see what's happening
         document.addEventListener('click', (e) => {
             console.log('Click detected on:', e.target, 'ID:', e.target.id, 'Classes:', e.target.className);
@@ -138,6 +163,21 @@ class IdeaDeckManager {
                 e.preventDefault();
                 e.stopPropagation();
                 this.deleteFromDetail();
+=======
+        // Detail modal button events - using class selector like deck buttons
+        document.addEventListener('click', (e) => {
+            // Check for detail action buttons by class
+            if (e.target.classList.contains('detail-action-btn') || e.target.closest('.detail-action-btn')) {
+                const button = e.target.classList.contains('detail-action-btn') ? e.target : e.target.closest('.detail-action-btn');
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (button.id === 'editDetailBtn') {
+                    this.editFromDetail();
+                } else if (button.id === 'deleteDetailBtn') {
+                    this.deleteFromDetail();
+                }
+>>>>>>> 0abb2eb (checkpoint)
                 return;
             }
         });
@@ -160,6 +200,12 @@ class IdeaDeckManager {
         this.setupParallaxEffect();
     }
 
+    /*
+    ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+    ║                                        💾 DATA MANAGEMENT                                                     ║
+    ║                         Sistema híbrido vault.json + localStorage                                            ║
+    ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+    */
     // Data Management
     async loadData() {
         console.log('Loading data: vault.json first, then localStorage merge...');
@@ -170,6 +216,10 @@ class IdeaDeckManager {
             const response = await fetch('./vault.json');
             if (response.ok) {
                 vaultData = await response.json();
+<<<<<<< HEAD
+=======
+                this.vaultData = JSON.parse(JSON.stringify(vaultData)); // Deep copy for comparison
+>>>>>>> 0abb2eb (checkpoint)
                 console.log('Vault data loaded:', vaultData);
                 // Mark all vault data with source
                 this.markDataSource(vaultData.decks, 'vault');
@@ -293,6 +343,8 @@ class IdeaDeckManager {
             name: 'Ideas Generales',
             description: 'Deck principal para ideas y proyectos',
             cards: [],
+            order: 0,
+            layout: 'landscape', // Default to landscape for Ideas Generales
             createdAt: new Date().toISOString()
         };
         this.decks.push(defaultDeck);
@@ -321,6 +373,12 @@ class IdeaDeckManager {
         });
     }
 
+    /*
+    ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+    ║                                        🛠️ UTILITY FUNCTIONS                                                   ║
+    ║                                    Funciones auxiliares                                                      ║
+    ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+    */
     // Utility Functions
     generateId() {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
@@ -357,6 +415,12 @@ class IdeaDeckManager {
             .filter(url => url.length > 0);
     }
 
+    /*
+    ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+    ║                                        📁 DECK MANAGEMENT                                                     ║
+    ║                                   Gestión de decks y CRUD                                                    ║
+    ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+    */
     // Deck Management
     showDeckModal(deck = null) {
         this.currentEditingDeck = deck;
@@ -400,6 +464,8 @@ class IdeaDeckManager {
                 name,
                 description,
                 cards: [],
+                order: this.decks.length,
+                layout: 'column', // Default to column for new decks
                 createdAt: new Date().toISOString()
             };
             this.decks.push(newDeck);
@@ -418,7 +484,23 @@ class IdeaDeckManager {
             this.updateFilters();
         }
     }
+    
+    // Toggle deck layout between landscape and column
+    toggleDeckLayout(deckId) {
+        const deck = this.decks.find(d => d.id === deckId);
+        if (deck) {
+            deck.layout = deck.layout === 'landscape' ? 'column' : 'landscape';
+            this.saveData();
+            this.render();
+        }
+    }
 
+    /*
+    ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+    ║                                        🃏 CARD MANAGEMENT                                                     ║
+    ║                                   Gestión de cards y CRUD                                                    ║
+    ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+    */
     // Card Management
     showCardModal(deckId, card = null) {
         this.currentEditingCard = { deckId, card };
@@ -433,7 +515,8 @@ class IdeaDeckManager {
             document.getElementById('cardDescription').value = card.description || '';
             document.getElementById('cardNotes').value = card.notes || '';
             document.getElementById('cardHashtags').value = card.hashtags ? card.hashtags.map(tag => `#${tag}`).join(' ') : '';
-            document.getElementById('cardImages').value = card.images ? card.images.join(', ') : '';
+            document.getElementById('cardCoverImage').value = card.coverImage || '';
+            document.getElementById('cardGalleryImages').value = card.galleryImages ? card.galleryImages.join(', ') : '';
         } else {
             title.textContent = 'Crear Nueva Card';
             form.reset();
@@ -455,12 +538,13 @@ class IdeaDeckManager {
         const description = document.getElementById('cardDescription').value.trim();
         const notes = document.getElementById('cardNotes').value.trim();
         const hashtagString = document.getElementById('cardHashtags').value.trim();
-        const imageString = document.getElementById('cardImages').value.trim();
+        const coverImage = document.getElementById('cardCoverImage').value.trim();
+        const galleryImageString = document.getElementById('cardGalleryImages').value.trim();
         
         if (!title) return;
         
         const hashtags = this.parseHashtags(hashtagString);
-        const images = this.parseImages(imageString);
+        const galleryImages = this.parseImages(galleryImageString);
         
         const deck = this.decks.find(d => d.id === this.currentEditingCard.deckId);
         if (!deck) return;
@@ -473,7 +557,8 @@ class IdeaDeckManager {
             card.description = description;
             card.notes = notes;
             card.hashtags = hashtags;
-            card.images = images;
+            card.coverImage = coverImage;
+            card.galleryImages = galleryImages;
             card.updatedAt = new Date().toISOString();
         } else {
             // Create new card
@@ -484,8 +569,10 @@ class IdeaDeckManager {
                 description,
                 notes,
                 hashtags,
-                images,
-                createdAt: new Date().toISOString()
+                coverImage,
+                galleryImages,
+                createdAt: new Date().toISOString(),
+                order: deck.cards.length
             };
             deck.cards.push(newCard);
         }
@@ -524,6 +611,12 @@ class IdeaDeckManager {
         }
     }
 
+    /*
+    ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+    ║                                        🎨 UI MANAGEMENT                                                       ║
+    ║                                   Gestión de interfaz de usuario                                             ║
+    ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+    */
     // UI Management
     toggleDataMenu() {
         const dropdown = document.querySelector('.dropdown');
@@ -539,6 +632,7 @@ class IdeaDeckManager {
         document.getElementById('cardModal').classList.remove('active');
         document.getElementById('cardDetailModal').classList.remove('active');
         document.getElementById('backupModal').classList.remove('active');
+<<<<<<< HEAD
     }
 
     // Backup Modal Management
@@ -626,8 +720,119 @@ class IdeaDeckManager {
         // For now, we'll use a simple heuristic based on ID patterns
         // Vault cards typically have structured IDs like "launch-card-001"
         return cardId.includes('-card-') || cardId.includes('launch-') || cardId.includes('vault-');
+=======
+>>>>>>> 0abb2eb (checkpoint)
     }
 
+    // Backup Modal Management
+    showBackupModal() {
+        const modal = document.getElementById('backupModal');
+        modal.classList.add('active');
+    }
+
+    hideBackupModal() {
+        document.getElementById('backupModal').classList.remove('active');
+    }
+
+    // Update source indicator in detail view
+    updateSourceIndicator(card) {
+        const indicator = document.getElementById('detailSourceIndicator');
+        if (!indicator) return;
+
+        let iconClass, iconSymbol, statusText;
+
+        // Determine card source and modification status
+        if (!card._source || card._source === 'vault') {
+            // Original vault data, check if it has been modified
+            const hasLocalModifications = this.hasLocalModifications(card);
+            if (hasLocalModifications) {
+                iconClass = 'modified';
+                iconSymbol = 'fas fa-globe';
+                statusText = 'Modificado localmente';
+            } else {
+                iconClass = 'vault';
+                iconSymbol = 'fas fa-archive';
+                statusText = 'Datos originales';
+            }
+        } else if (card._source === 'localStorage') {
+            // Check if this is a completely new card or modified existing one
+            const existsInVault = this.existsInVault(card.id);
+            if (existsInVault) {
+                iconClass = 'modified';
+                iconSymbol = 'fas fa-globe';
+                statusText = 'Modificado localmente';
+            } else {
+                iconClass = 'new';
+                iconSymbol = 'fas fa-feather-alt';
+                statusText = 'Creado localmente';
+            }
+        }
+
+        // Update the indicator
+        indicator.innerHTML = `
+            <i class="source-icon ${iconClass} ${iconSymbol}"></i>
+            <span>${statusText}</span>
+        `;
+
+        // Add last modified date if available
+        if (card.updatedAt) {
+            const modifiedDate = this.formatDate(card.updatedAt);
+            indicator.innerHTML += `<span class="modified-date"> • ${modifiedDate}</span>`;
+        }
+    }
+
+    // Helper method to check if card has local modifications
+    hasLocalModifications(card) {
+        try {
+            const savedData = localStorage.getItem('cardsBacklog');
+            if (!savedData) return false;
+            
+            const localData = JSON.parse(savedData);
+            if (!localData.decks) return false;
+
+            // Look for the card in localStorage
+            for (const deck of localData.decks) {
+                if (deck.cards) {
+                    const localCard = deck.cards.find(c => c.id === card.id);
+                    if (localCard) {
+                        // Check if it's actually different from vault data
+                        if (this.vaultData) {
+                            const vaultDeck = this.vaultData.decks?.find(d => d.id === deck.id);
+                            const vaultCard = vaultDeck?.cards?.find(c => c.id === card.id);
+                            if (vaultCard) {
+                                // Compare key fields to see if actually modified
+                                return localCard.title !== vaultCard.title ||
+                                       localCard.description !== vaultCard.description ||
+                                       localCard.notes !== vaultCard.notes ||
+                                       localCard.category !== vaultCard.category ||
+                                       JSON.stringify(localCard.hashtags) !== JSON.stringify(vaultCard.hashtags) ||
+                                       JSON.stringify(localCard.images) !== JSON.stringify(vaultCard.images);
+                            }
+                        }
+                        return true;
+                    }
+                }
+            }
+            return false;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    // Helper method to check if card exists in vault
+    existsInVault(cardId) {
+        // This would need access to the original vault data
+        // For now, we'll use a simple heuristic based on ID patterns
+        // Vault cards typically have structured IDs like "launch-card-001"
+        return cardId.includes('-card-') || cardId.includes('launch-') || cardId.includes('vault-');
+    }
+
+    /*
+    ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+    ║                                        🔍 DETAIL MODAL                                                        ║
+    ║                              Vista detallada con efectos parallax                                           ║
+    ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+    */
     // Detail Modal Management
     showDetailModal(deckId, card) {
         console.log('Setting currentDetailCard:', { deckId, card });
@@ -709,18 +914,43 @@ class IdeaDeckManager {
         // Images
         const imagesElement = document.getElementById('detailImages');
         const imagesField = document.getElementById('detailImagesField');
-        if (card.images && card.images.length > 0) {
-            imagesElement.innerHTML = card.images
-                .map(img => `<img src="${img}" alt="Card image" class="detail-image" onerror="this.style.display='none'">`)
+        
+        let hasImages = false;
+        let imagesHTML = '';
+        
+        // Cover image
+        if (card.coverImage) {
+            imagesHTML += `<div class="detail-cover-image">
+                <img src="${card.coverImage}" alt="Cover image" class="detail-image-cover" onerror="this.style.display='none'">
+                <div class="detail-image-label">Portada</div>
+            </div>`;
+            hasImages = true;
+        }
+        
+        // Gallery images
+        if (card.galleryImages && card.galleryImages.length > 0) {
+            imagesHTML += `<div class="detail-gallery-images">
+                <div class="detail-image-label">Galería</div>
+                <div class="detail-gallery-grid">`;
+            imagesHTML += card.galleryImages
+                .map(img => `<img src="${img}" alt="Gallery image" class="detail-image-gallery" onerror="this.style.display='none'">`)
                 .join('');
+            imagesHTML += `</div></div>`;
+            hasImages = true;
+        }
+        
+        if (hasImages) {
+            imagesElement.innerHTML = imagesHTML;
             imagesField.style.display = 'block';
         } else {
-            imagesField.style.display = 'none';
+            imagesElement.innerHTML = '<div class="empty-message">Sin imágenes</div>';
+            imagesField.style.display = 'block';
         }
     }
 
     editFromDetail() {
         console.log('Edit from detail clicked, currentDetailCard:', this.currentDetailCard);
+<<<<<<< HEAD
         console.log('Available decks:', this.decks.map(d => ({id: d.id, name: d.name})));
         
         if (this.currentDetailCard && this.currentDetailCard.card) {
@@ -740,6 +970,27 @@ class IdeaDeckManager {
                 }
             } else {
                 console.error('Deck not found or has no cards. Looking for deckId:', this.currentDetailCard.deckId);
+=======
+        
+        if (this.currentDetailCard && this.currentDetailCard.card) {
+            // Find the actual card object from the deck
+            const deck = this.decks.find(d => d.id === this.currentDetailCard.deckId);
+            
+            if (deck && deck.cards) {
+                const card = deck.cards.find(c => c.id === this.currentDetailCard.card.id);
+                
+                if (card) {
+                    this.hideDetailModal();
+                    // Small delay to ensure modal is hidden before showing edit modal
+                    setTimeout(() => {
+                        this.showCardModal(this.currentDetailCard.deckId, card);
+                    }, 100);
+                } else {
+                    console.error('Card not found in deck');
+                }
+            } else {
+                console.error('Deck not found or has no cards');
+>>>>>>> 0abb2eb (checkpoint)
             }
         } else {
             console.error('No currentDetailCard found for editing');
@@ -753,6 +1004,12 @@ class IdeaDeckManager {
         }
     }
 
+    /*
+    ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+    ║                                        ✨ PARALLAX EFFECTS                                                    ║
+    ║                              Efectos 3D inspirados en Ana Cards                                              ║
+    ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+    */
     // Mouse Parallax Effects for Card Detail (Ana Cards style)
     setupMouseParallax() {
         const modal = document.getElementById('cardDetailModal');
@@ -891,6 +1148,12 @@ class IdeaDeckManager {
         // This is called during init, but we setup mouse parallax when modal opens
     }
 
+    /*
+    ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+    ║                                        🔍 SEARCH & FILTER                                                     ║
+    ║                                Sistema de búsqueda y filtrado                                                ║
+    ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+    */
     // Search and Filter
     handleSearch(query) {
         this.currentSearchQuery = query.toLowerCase();
@@ -972,6 +1235,12 @@ class IdeaDeckManager {
         });
     }
 
+    /*
+    ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+    ║                                        🎭 RENDERING ENGINE                                                    ║
+    ║                                  Generación de elementos DOM                                                  ║
+    ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+    */
     // Rendering
     render() {
         const container = document.getElementById('decksContainer');
@@ -982,7 +1251,10 @@ class IdeaDeckManager {
             return;
         }
         
-        this.decks.forEach(deck => {
+        // Sort decks by order
+        const sortedDecks = [...this.decks].sort((a, b) => (a.order || 0) - (b.order || 0));
+        
+        sortedDecks.forEach(deck => {
             const deckElement = this.createDeckElement(deck);
             container.appendChild(deckElement);
         });
@@ -1001,9 +1273,12 @@ class IdeaDeckManager {
 
     createDeckElement(deck) {
         const filteredCards = this.filterCards(deck.cards);
+        // Sort cards by order
+        const sortedCards = [...filteredCards].sort((a, b) => (a.order || 0) - (b.order || 0));
         
         const deckDiv = document.createElement('div');
         deckDiv.className = 'deck';
+        deckDiv.setAttribute('data-deck-id', deck.id);
         deckDiv.innerHTML = `
             <div class="deck-header">
                 <div>
@@ -1011,6 +1286,9 @@ class IdeaDeckManager {
                     <div class="deck-description">${deck.description || ''}</div>
                 </div>
                 <div class="deck-actions">
+                    <button class="deck-action-btn" onclick="app.toggleDeckLayout('${deck.id}')" title="${deck.layout === 'landscape' ? 'Vista en columnas' : 'Vista apaisada'}">
+                        <i class="fas fa-${deck.layout === 'landscape' ? 'th' : 'th-large'}"></i>
+                    </button>
                     <button class="deck-action-btn" onclick="app.showDeckModal(app.decks.find(d => d.id === '${deck.id}'))" title="Editar deck">
                         <i class="fas fa-edit"></i>
                     </button>
@@ -1023,8 +1301,8 @@ class IdeaDeckManager {
                 <span><i class="fas fa-cards-blank"></i> ${filteredCards.length} cards</span>
                 <span><i class="fas fa-calendar"></i> ${this.formatDate(deck.createdAt)}</span>
             </div>
-            <div class="cards-grid">
-                ${filteredCards.map(card => this.createCardHTML(card, deck.id)).join('')}
+            <div class="cards-grid ${deck.layout === 'landscape' ? 'cards-grid-landscape' : 'cards-grid-column'}" data-deck-id="${deck.id}">
+                ${sortedCards.map(card => this.createCardHTML(card, deck.id)).join('')}
                 <div class="add-card-btn" onclick="app.showCardModal('${deck.id}')">
                     <i class="fas fa-plus"></i>
                     <span>Agregar Card</span>
@@ -1034,6 +1312,7 @@ class IdeaDeckManager {
         
         // Add drag and drop functionality
         this.addDragAndDropToCards(deckDiv, deck.id);
+        this.addDragAndDropToDecks(deckDiv);
         
         return deckDiv;
     }
@@ -1043,12 +1322,36 @@ class IdeaDeckManager {
         const hashtagsHTML = card.hashtags && card.hashtags.length > 0 
             ? `<div class="card-hashtags">${card.hashtags.map(tag => `<span class="hashtag">#${tag}</span>`).join('')}</div>`
             : '';
-        const imagesHTML = card.images && card.images.length > 0
-            ? `<div class="card-images">${card.images.slice(0, 3).map(img => `<img src="${img}" alt="Card image" class="card-image" onerror="this.style.display='none'">`).join('')}</div>`
-            : '';
+        
+        // Cover image and gallery
+        let imagesHTML = '';
+        if (card.coverImage || (card.galleryImages && card.galleryImages.length > 0)) {
+            imagesHTML = `<div class="card-images">`;
+            
+            // Cover image first (full width)
+            if (card.coverImage) {
+                imagesHTML += `<div class="card-cover-container">
+                    <img src="${card.coverImage}" alt="Card cover" class="card-cover-image" onerror="this.style.display='none'">
+                </div>`;
+            }
+            
+            // Gallery images in horizontal row
+            if (card.galleryImages && card.galleryImages.length > 0) {
+                const galleryImages = card.galleryImages.slice(0, 3);
+                imagesHTML += `<div class="card-gallery-container">`;
+                imagesHTML += galleryImages.map(img => `<img src="${img}" alt="Gallery image" class="card-gallery-image" onerror="this.style.display='none'">`).join('');
+                
+                if (card.galleryImages.length > 3) {
+                    imagesHTML += `<div class="card-more-images">+${card.galleryImages.length - 3}</div>`;
+                }
+                imagesHTML += `</div>`;
+            }
+            
+            imagesHTML += `</div>`;
+        }
         
         return `
-            <div class="card" draggable="true" data-card-id="${card.id}" data-deck-id="${deckId}" onclick="app.showDetailModal('${deckId}', app.decks.find(d => d.id === '${deckId}').cards.find(c => c.id === '${card.id}'))">
+            <div class="card" draggable="true" data-card-id="${card.id}" data-deck-id="${deckId}" data-card-order="${card.order || 0}" onclick="app.showDetailModal('${deckId}', app.decks.find(d => d.id === '${deckId}').cards.find(c => c.id === '${card.id}'))">
                 <div class="card-header">
                     <div class="card-title">${card.title}</div>
                     <div class="card-actions">
@@ -1068,7 +1371,13 @@ class IdeaDeckManager {
         `;
     }
 
-    // Drag and Drop
+    /*
+    ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+    ║                                        🎯 DRAG & DROP SYSTEM                                                  ║
+    ║                              Sistema completo de arrastrar y soltar                                         ║
+    ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+    */
+    // Drag and Drop for Cards
     addDragAndDropToCards(deckElement, deckId) {
         const cards = deckElement.querySelectorAll('.card');
         const cardsGrid = deckElement.querySelector('.cards-grid');
@@ -1076,8 +1385,10 @@ class IdeaDeckManager {
         cards.forEach(card => {
             card.addEventListener('dragstart', (e) => {
                 e.dataTransfer.setData('text/plain', JSON.stringify({
+                    type: 'card',
                     cardId: card.dataset.cardId,
-                    fromDeckId: card.dataset.deckId
+                    fromDeckId: card.dataset.deckId,
+                    cardOrder: card.dataset.cardOrder
                 }));
                 card.classList.add('dragging');
             });
@@ -1089,6 +1400,15 @@ class IdeaDeckManager {
         
         cardsGrid.addEventListener('dragover', (e) => {
             e.preventDefault();
+            const draggingCard = cardsGrid.querySelector('.dragging');
+            if (!draggingCard) return;
+            
+            const afterElement = this.getDragAfterElement(cardsGrid, e.clientY, e.clientX);
+            if (afterElement == null) {
+                cardsGrid.appendChild(draggingCard);
+            } else {
+                cardsGrid.insertBefore(draggingCard, afterElement);
+            }
             deckElement.classList.add('drag-over');
         });
         
@@ -1104,13 +1424,123 @@ class IdeaDeckManager {
             
             try {
                 const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-                this.moveCard(data.cardId, data.fromDeckId, deckId);
+                if (data.type === 'card') {
+                    if (data.fromDeckId === deckId) {
+                        // Reorder within same deck
+                        this.reorderCards(deckId, cardsGrid);
+                    } else {
+                        // Move between decks
+                        this.moveCard(data.cardId, data.fromDeckId, deckId);
+                    }
+                }
             } catch (error) {
-                console.error('Error moving card:', error);
+                console.error('Error handling card drop:', error);
             }
         });
     }
+    
+    // Drag and Drop for Decks
+    addDragAndDropToDecks(deckElement) {
+        const deckHeader = deckElement.querySelector('.deck-header');
+        
+        deckHeader.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', JSON.stringify({
+                type: 'deck',
+                deckId: deckElement.dataset.deckId
+            }));
+            deckElement.classList.add('dragging');
+        });
+        
+        deckHeader.addEventListener('dragend', () => {
+            deckElement.classList.remove('dragging');
+        });
+        
+        deckHeader.draggable = true;
+        
+        deckElement.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const draggingDeck = document.querySelector('.deck.dragging');
+            if (!draggingDeck || draggingDeck === deckElement) return;
+            
+            const container = document.getElementById('decksContainer');
+            const afterElement = this.getDragAfterElement(container, e.clientY, e.clientX, '.deck');
+            
+            if (afterElement == null) {
+                container.appendChild(draggingDeck);
+            } else {
+                container.insertBefore(draggingDeck, afterElement);
+            }
+        });
+        
+        deckElement.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+            if (data.type === 'deck') {
+                this.reorderDecks();
+            }
+        });
+    }
+    
+    // Helper function to get drag after element
+    getDragAfterElement(container, y, x, selector = '.card') {
+        const draggableElements = [...container.querySelectorAll(`${selector}:not(.dragging):not(.add-card-btn)`)];
+        
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = selector === '.deck' ? y - box.top - box.height / 2 : 
+                          (y - box.top - box.height / 2) + (x - box.left - box.width / 2) * 0.3;
+            
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+    
+    // Reorder cards within a deck
+    reorderCards(deckId, cardsGrid) {
+        const deck = this.decks.find(d => d.id === deckId);
+        if (!deck) return;
+        
+        const cardElements = [...cardsGrid.querySelectorAll('.card')];
+        const newOrder = [];
+        
+        cardElements.forEach((cardElement, index) => {
+            const cardId = cardElement.dataset.cardId;
+            const card = deck.cards.find(c => c.id === cardId);
+            if (card) {
+                card.order = index;
+                newOrder.push(card);
+            }
+        });
+        
+        // Update deck cards with new order
+        deck.cards = newOrder;
+        this.saveData();
+    }
+    
+    // Reorder decks
+    reorderDecks() {
+        const deckElements = [...document.querySelectorAll('.deck')];
+        
+        deckElements.forEach((deckElement, index) => {
+            const deckId = deckElement.dataset.deckId;
+            const deck = this.decks.find(d => d.id === deckId);
+            if (deck) {
+                deck.order = index;
+            }
+        });
+        
+        this.saveData();
+    }
 
+    /*
+    ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+    ║                                        📤 IMPORT/EXPORT                                                       ║
+    ║                                Sistema de importación y exportación                                          ║
+    ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+    */
     // Data Export/Import
     exportToCSV() {
         const csvData = [];
@@ -1245,6 +1675,8 @@ class IdeaDeckManager {
                     notes: cardData.notes,
                     hashtags: cardData.hashtags,
                     images: cardData.images,
+                    coverImage: cardData.images && cardData.images.length > 0 ? cardData.images[0] : null,
+                    order: deck.cards.length,
                     createdAt: cardData.createdAt
                 };
                 deck.cards.push(newCard);
@@ -1276,5 +1708,11 @@ class IdeaDeckManager {
     }
 }
 
+/*
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                                        🚀 APPLICATION STARTUP                                                   ║
+║                                     Inicialización de la app                                                    ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+*/
 // Initialize the application
 const app = new IdeaDeckManager();

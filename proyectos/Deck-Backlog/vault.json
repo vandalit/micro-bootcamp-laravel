@@ -1,6 +1,7 @@
 {
   "decks": [
     {
+<<<<<<< HEAD
       "id": "launch-deck-001",
       "name": "🚀 Deck-Backlog Launch",
       "description": "Ideas y funcionalidades para el lanzamiento de Deck-Backlog",
@@ -82,8 +83,83 @@
         }
       ],
       "createdAt": "2025-09-03T17:28:00.000Z"
+=======
+      "id": "demo-deck-001",
+      "name": "Demo Deck",
+      "description": "Deck de demostración con ejemplos de cards",
+      "layout": "column",
+      "order": 1,
+      "cards": [
+        {
+          "id": "demo-card-001",
+          "title": "Card de Ejemplo con Imagen",
+          "category": "demo",
+          "description": "Esta es una card de demostración que muestra cómo se ve con imagen de portada",
+          "notes": "Ejemplo de notas detalladas para mostrar el funcionamiento completo del sistema.",
+          "hashtags": [
+            "demo",
+            "ejemplo",
+            "imagen"
+          ],
+          "coverImage": "https://picsum.photos/400/300?random=1",
+          "galleryImages": [
+            "https://picsum.photos/200/150?random=2",
+            "https://picsum.photos/200/150?random=3"
+          ],
+          "createdAt": "2025-09-03T17:28:00.000Z"
+        },
+        {
+          "id": "demo-card-002",
+          "title": "Card con Galería",
+          "category": "demo",
+          "description": "Ejemplo de card con múltiples imágenes en galería",
+          "notes": "Esta card demuestra cómo se muestran las imágenes de galería junto con la imagen de portada.",
+          "hashtags": [
+            "galería",
+            "imágenes",
+            "visual"
+          ],
+          "coverImage": "https://picsum.photos/400/300?random=4",
+          "galleryImages": [
+            "https://picsum.photos/200/150?random=5",
+            "https://picsum.photos/200/150?random=6",
+            "https://picsum.photos/200/150?random=7"
+          ],
+          "createdAt": "2025-09-03T17:29:00.000Z"
+        },
+        {
+          "id": "demo-card-003",
+          "title": "Card Simple",
+          "category": "demo",
+          "description": "Ejemplo de card básica sin imágenes",
+          "notes": "Esta card muestra cómo se ve el diseño cuando no hay imágenes configuradas.",
+          "hashtags": [
+            "simple",
+            "básico",
+            "texto"
+          ],
+          "coverImage": "",
+          "galleryImages": [],
+          "createdAt": "2025-09-03T17:30:00.000Z"
+        }
+      ],
+      "createdAt": "2025-09-03T17:28:00.000Z"
+    },
+    {
+      "id": "ideas-generales-default",
+      "name": "Ideas Generales",
+      "description": "Deck principal para ideas y proyectos",
+      "layout": "landscape",
+      "order": 0,
+      "cards": [],
+      "createdAt": "2025-09-03T17:27:00.000Z"
+>>>>>>> 0abb2eb (checkpoint)
     }
   ],
   "lastModified": "2025-09-03T17:32:00.000Z",
   "version": "1.0.0"
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 0abb2eb (checkpoint)
