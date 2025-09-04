@@ -30,15 +30,21 @@ export class CartStateService {
         actionSources: {
             add: (state, action$: Observable<ProductItemCart>) =>
                 action$.pipe(
-                    map((product) => this.add(state, product))
+                    map((product) => {
+                        const newState = this.add(state, product);
+                        // Guardar inmediatamente después de añadir
+                        this._storageService.saveProducts(newState.products);
+                        console.log('Product added to cart and saved:', newState.products);
+                        return newState;
+                    })
                 )
         },
         effects: (state) => ({
-            load: () => {
-                if (!state.loaded()) {
+            saveProducts: () => {
+                if (state.loaded()) {
                     this._storageService.saveProducts(state().products);
+                    console.log('Products saved to localStorage:', state().products);
                 }
-                console.log(state.products());
             }
         })
     });

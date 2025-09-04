@@ -22,7 +22,10 @@ export default class ProductList {
   }
 
   addToCart(product: Product) {
+    // FLAG: FALTA - Llamar al effect para guardar después de añadir
     this.cartState.add({
       product, quantity: 1,
     });
-}}
+    // FLAG: NECESARIO - Trigger del effect saveOnAdd
+    console.log('Adding product to cart:', product.title);
+  }}
