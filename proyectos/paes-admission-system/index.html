@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Admisión Universitaria - PAES</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="login-page" class="page active">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <i class="fas fa-graduation-cap"></i>
+                    <h1>Sistema de Admisión</h1>
+                    <p>Accede con tu RUT y contraseña</p>
+                </div>
+                
+                <form id="login-form" class="login-form">
+                    <div class="form-group">
+                        <label for="rut">RUT</label>
+                        <input type="text" id="rut" name="rut" placeholder="12.345.678-9" required>
+                        <i class="fas fa-user form-icon"></i>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Contraseña</label>
+                        <input type="password" id="password" name="password" placeholder="Ingresa tu contraseña" required>
+                        <i class="fas fa-lock form-icon"></i>
+                        <button type="button" class="toggle-password" onclick="togglePassword()">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    
+                    <button type="submit" class="login-btn">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Iniciar Sesión
+                    </button>
+                </form>
+                
+                <div class="demo-credentials">
+                    <h3>Credenciales de Prueba:</h3>
+                    <p><strong>RUT:</strong> 12.345.678-9</p>
+                    <p><strong>Contraseña:</strong> demo123</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Page -->
+    <div id="dashboard-page" class="page">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <i class="fas fa-graduation-cap"></i>
+                <span>Portal Universitario</span>
+            </div>
+            <div class="nav-user">
+                <span id="user-name">Estudiante</span>
+                <button onclick="logout()" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </nav>
+
+        <div class="dashboard-container">
+            <div class="student-info">
+                <div class="info-card">
+                    <h2>Información del Estudiante</h2>
+                    <div class="student-details">
+                        <div class="detail-item">
+                            <span class="label">Nombre:</span>
+                            <span id="student-name">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">RUT:</span>
+                            <span id="student-rut">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Puntaje PAES:</span>
+                            <span id="paes-score" class="score">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Porcentaje de Beca:</span>
+                            <span id="scholarship-percentage" class="scholarship">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="careers-section">
+                <h2>Carreras Disponibles</h2>
+                <div class="filters">
+                    <select id="department-filter">
+                        <option value="">Todos los Departamentos</option>
+                    </select>
+                    <select id="score-filter">
+                        <option value="">Todos los Puntajes</option>
+                        <option value="high">Puntaje Alto (700+)</option>
+                        <option value="medium">Puntaje Medio (500-699)</option>
+                        <option value="low">Puntaje Bajo (400-499)</option>
+                    </select>
+                </div>
+                
+                <div id="careers-grid" class="careers-grid">
+                    <!-- Careers will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Career Detail Modal -->
+    <div id="career-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-career-name">Carrera</h2>
+                <button class="close-modal" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="career-details">
+                    <div class="detail-section">
+                        <h3>Información General</h3>
+                        <p id="modal-career-description"></p>
+                        <div class="career-stats">
+                            <div class="stat">
+                                <span class="stat-label">Departamento:</span>
+                                <span id="modal-career-department"></span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Duración:</span>
+                                <span id="modal-career-duration"></span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Puntaje Mínimo:</span>
+                                <span id="modal-career-min-score"></span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Tu Beca:</span>
+                                <span id="modal-scholarship" class="scholarship"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h3>Malla Curricular</h3>
+                        <div id="modal-curriculum" class="curriculum-grid">
+                            <!-- Curriculum will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button id="enroll-btn" class="enroll-btn" onclick="enrollInCareer()">
+                        <i class="fas fa-check"></i>
+                        Matricularme
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
